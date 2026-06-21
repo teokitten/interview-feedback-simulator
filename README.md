@@ -34,18 +34,23 @@ Three interviewer personas:
 
 At the end of each session, the app generates a full feedback report including trait ratings, job description match analysis, the interviewer's internal notes, and specific things to work on.
 
-## Getting started
+## Prerequisites
 
-This app runs entirely in your browser. No backend, no account, no data stored anywhere except your own browser.
-
-You need an **Anthropic API key** to use it:
+To use this app you need an **Anthropic API key**:
 
 1. Create a free account at [console.anthropic.com](https://console.anthropic.com)
-2. In the left sidebar, select **API Keys** and create a new key
-3. In **Credits**, click **Add funds** (note: API access is separate from Claude Pro)
-4. Paste your key into the **ANTHROPIC API KEY** field in the app
+2. In **Credits**, click **Add funds** (API access is separate from a Claude Pro subscription)
+3. In the left sidebar, select **API Keys** and create a new key
+4. Paste it into the **ANTHROPIC API KEY** field in the app
 
-**Cost:** approximately $0.10–0.20 per full session (10–12 exchanges + feedback generation) using Claude Sonnet.
+**Cost:** approximately $0.10–0.20 per session (10–12 exchanges + feedback report), billed directly by Anthropic.
+
+## Getting started
+
+No installation. Open this link in any browser and start:
+https://teokitten.github.io/interview-feedback-simulator
+
+The app runs entirely in your browser – no backend, no account, no data stored anywhere except your own device.
 
 ## Running locally
 
