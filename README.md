@@ -52,16 +52,6 @@ https://teokitten.github.io/interview-feedback-simulator
 
 The app runs entirely in your browser – no backend, no account, no data stored anywhere except your own device.
 
-## Running locally
-
-No build step required. Clone the repo and open the file:
-
-```bash
-git clone https://github.com/teokitten/interview-feedback-simulator.git
-cd interview-feedback-simulator
-open index.html
-```
-
 ## Tech stack
 
 Vanilla JS · Single HTML file · Anthropic API (claude-sonnet-4-6) · No frameworks · No dependencies
