@@ -38,10 +38,10 @@ At the end of each session, the app generates a full feedback report including t
 
 To use this app you need an **Anthropic API key**:
 
-1. Create a free account at [console.anthropic.com](https://console.anthropic.com)
-2. In **Credits**, click **Add funds** (API access is separate from a Claude Pro subscription)
-3. In the left sidebar, select **API Keys** and create a new key
-4. Paste it into the **ANTHROPIC API KEY** field in the app
+1. Create a free account at [console.anthropic.com](https://console.anthropic.com).
+2. In **Credits**, click **Add funds** (API access is separate from a Claude Pro subscription).
+3. In the left sidebar, select **API Keys** and create a new key.
+4. Paste it into the **ANTHROPIC API KEY** field in the app.
 
 **Cost:** approximately $0.10–0.20 per session (10–12 exchanges + feedback report), billed directly by Anthropic.
 
