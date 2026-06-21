@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Feedback Simulator</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:     #040810;
+  --s1:     #080d1c;
+  --s2:     #0c1225;
+  --s3:     #111828;
+  --b1:     #111828;
+  --b2:     #1a2440;
+  --t1:     #c8d4f0;
+  --t2:     #6070a0;
+  --t3:     #6070a0;
+  --ac:     #f0a030;
+  --ac-dim: rgba(240,160,48,0.08);
+  --r:      #40a0ff;
+  --h:      #b06aff;
+  --tc:     #4edc50;
+  --err:    #ff5c5c;
+  --warn:   #f0a030;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--t1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { cursor: pointer; font-family: inherit; }
+
+/* ── Header ── */
+#site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--b1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 44px;
+}
+.header-logo {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--t2);
+}
+.header-phase {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--t2);
+}
+
+/* ── Setup ── */
+#setup-screen {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+}
+.setup-eyebrow {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ac);
+  opacity: 0.7;
+  margin-bottom: 10px;
+}
+#setup-screen h1 {
+  font-size: clamp(24px, 4vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.18;
+  color: var(--t1);
+  margin-bottom: 10px;
+}
+.setup-subtitle {
+  font-size: 14px;
+  color: var(--t2);
+  margin-bottom: 20px;
+}
+.setup-expandables .expandable { margin-bottom: 14px; }
+.setup-fields .field-group { margin-bottom: 24px; }
+
+/* ── Field labels ── */
+.field-label {
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--t2);
+  margin-bottom: 8px;
+}
+.field-hint {
+  font-size: 12px;
+  color: var(--t2);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.field-group { margin-bottom: 20px; }
+
+/* ── Bare expandables ── */
+.expandable { margin-bottom: 18px; }
+.exp-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+.exp-trigger-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ac);
+}
+.exp-arrow {
+  font-size: 11px;
+  color: rgba(240,160,48,0.4);
+  flex-shrink: 0;
+  margin-left: 8px;
+  transition: transform 0.18s;
+  display: inline-block;
+}
+.exp-trigger[aria-expanded="true"] .exp-arrow { transform: rotate(180deg); }
+.exp-content { display: none; margin-top: 10px; padding-left: 2px; }
+.exp-content.open { display: block; }
+
+/* value lines */
+.value-line {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: #a07028;
+  line-height: 1.8;
+}
+.value-arrow { color: rgba(240,160,48,0.3); font-size: 11px; flex-shrink: 0; }
+
+/* cost */
+.cost-para { font-size: 13px; color: #a07028; line-height: 1.7; margin-bottom: 10px; }
+.cost-mono { font-family: 'Courier New', monospace; font-size: 12px; color: #7a5518; line-height: 2; }
+.cost-highlight { color: var(--ac); font-weight: 700; }
+.cost-note { font-family: 'Courier New', monospace; font-size: 12px; color: #5a3a10; margin-top: 8px; }
+
+/* steps */
+.step-row { display: flex; gap: 12px; font-size: 13px; color: #a07028; line-height: 1.7; }
+.step-num { font-family: 'Courier New', monospace; color: var(--ac); width: 20px; flex-shrink: 0; }
+.steps-note { font-family: 'Courier New', monospace; font-size: 12px; color: #5a3a10; margin-top: 10px; line-height: 1.6; }
+
+.setup-hr { border: none; border-top: 1px solid var(--b1); margin: 16px 0; }
+
+/* ── Inputs ── */
+input[type="password"],
+input[type="text"] {
+  width: 100%;
+  background: var(--s1) !important;
+  border: 1px solid var(--b1);
+  border-radius: 5px;
+  color: var(--t1) !important;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input[type="password"]:focus,
+input[type="text"]:focus { border-color: var(--ac); }
+input[type="password"]::placeholder,
+input[type="text"]::placeholder { color: var(--t2); }
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px var(--s1) inset !important;
+  -webkit-text-fill-color: var(--t1) !important;
+  caret-color: var(--t1);
+}
+
+textarea {
+  width: 100%;
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: 5px;
+  color: var(--t1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  resize: vertical;
+  line-height: 1.6;
+}
+textarea:focus { border-color: var(--ac); }
+textarea::placeholder { color: var(--t2); }
+
+/* ── Persona cards ── */
+.persona-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 4px;
+}
+.persona-card {
+  border: 1px solid var(--b1);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--s1);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s, border-color 0.15s;
+}
+.persona-card:hover { background: var(--s2); }
+.persona-card.selected { background: var(--s2); }
+.persona-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  color: #040810;
+  margin-bottom: 6px;
+}
+.persona-label { font-size: 13px; font-weight: 600; line-height: 1.2; margin-bottom: 2px; }
+.persona-name { font-family: 'Courier New', monospace; font-size: 10px; color: var(--t2); margin-bottom: 5px; }
+.persona-desc { font-size: 11px; line-height: 1.5; }
+
+/* ── Error + start ── */
+.error-msg { display: none; font-size: 13px; color: var(--err); margin-top: 8px; }
+.error-msg.visible { display: block; }
+
+#start-btn {
+  display: block;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  background: var(--ac);
+  color: #040810;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 11px 32px;
+  border-radius: 5px;
+  margin-top: 16px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+#start-btn:hover:not(:disabled) { opacity: 0.86; }
+#start-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Interview ── */
+#interview-screen {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+.interview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--b1);
+  margin-bottom: 24px;
+}
+.interviewer-info { display: flex; align-items: center; gap: 10px; }
+.avatar-lg {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 13px;
+  color: #040810;
+  flex-shrink: 0;
+}
+.interviewer-name { font-size: 14px; font-weight: 600; color: var(--t1); }
+.interviewer-role { font-family: 'Courier New', monospace; font-size: 11px; color: var(--t2); }
+
+#end-btn {
+  background: transparent;
+  border: 1px solid var(--b2);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--t2);
+  padding: 6px 12px;
+  transition: color 0.15s, border-color 0.15s;
+}
+#end-btn:hover { color: var(--err); border-color: var(--err); }
+
+/* ── Messages ── */
+#messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 200px;
+  margin-bottom: 24px;
+}
+.msg-row { display: flex; align-items: flex-start; gap: 10px; animation: fadeIn 0.2s ease; }
+.msg-row.user { flex-direction: row-reverse; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.avatar-sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 10px;
+  color: #040810;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.avatar-sm.user-av { background: var(--s3); color: var(--t2); }
+
+.msg-bubble {
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: 6px;
+  padding: 11px 15px;
+  font-size: 14px;
+  line-height: 1.65;
+  max-width: 82%;
+  color: var(--t1);
+}
+.msg-bubble.user-bubble {
+  background: var(--ac-dim);
+  border-color: rgba(240,160,48,0.18);
+}
+
+/* ── Stream slot ── */
+#stream-slot { margin-bottom: 24px; display: none; }
+#stream-slot.visible { display: flex; align-items: flex-start; gap: 10px; }
+
+.cursor-blink {
+  display: inline-block;
+  width: 2px;
+  height: 13px;
+  background: var(--t2);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 0.85s step-end infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+.stream-error { color: var(--err); font-size: 13px; margin-top: 8px; }
+
+/* ── Input area ── */
+.input-area {
+  border-top: 1px solid var(--b1);
+  padding-top: 18px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+#user-input {
+  flex: 1;
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: 5px;
+  color: var(--t1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  padding: 11px 14px;
+  outline: none;
+  min-height: 44px;
+  max-height: 140px;
+  resize: none;
+  overflow-y: auto;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+}
+#user-input:focus { border-color: var(--ac); }
+#user-input::placeholder { color: var(--t2); }
+
+#send-btn {
+  background: var(--ac);
+  color: #040810;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 5px;
+  border: none;
+  flex-shrink: 0;
+  align-self: flex-end;
+  transition: opacity 0.15s;
+}
+#send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+#send-btn:not(:disabled):hover { opacity: 0.86; }
+
+/* ── Evaluating ── */
+#evaluating-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  min-height: 400px;
+  gap: 20px;
+}
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--b2);
+  border-top-color: var(--ac);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.eval-caption { font-family: 'Courier New', monospace; font-size: 12px; color: var(--t2); letter-spacing: 0.1em; }
+
+/* ── Feedback ── */
+#feedback-screen {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 36px 24px 80px;
+}
+.section-title {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--t2);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--b1);
+  margin-bottom: 16px;
+}
+.fb-section { margin-bottom: 40px; }
+.fb-header { padding-bottom: 28px; border-bottom: 1px solid var(--b1); margin-bottom: 36px; }
+.fb-eyebrow { font-family: 'Courier New', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--t2); margin-bottom: 6px; }
+.fb-header h1 { font-size: 22px; font-weight: 700; color: var(--t1); margin-bottom: 10px; }
+
+.badge-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.badge { font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 3px; }
+.badge-advance    { background: rgba(78,220,80,0.1);  color: var(--tc);  border: 1px solid rgba(78,220,80,0.25); }
+.badge-no-advance { background: rgba(255,92,92,0.1);  color: var(--err); border: 1px solid rgba(255,92,92,0.25); }
+.badge-neutral    { background: var(--s2); color: var(--t2); border: 1px solid var(--b1); }
+
+.impression-box {
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: 5px;
+  padding: 18px 20px;
+  font-size: 15px;
+  line-height: 1.72;
+  color: var(--t1);
+}
+
+.trait-card {
+  display: flex;
+  gap: 14px;
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 8px;
+}
+.trait-rating-col { width: 78px; flex-shrink: 0; }
+.rating-badge {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 7px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.rating-strong   { background: rgba(78,220,80,0.1);  color: var(--tc); }
+.rating-adequate { background: rgba(240,160,48,0.1); color: var(--warn); }
+.rating-weak     { background: rgba(255,92,92,0.1);  color: var(--err); }
+.trait-content { flex: 1; min-width: 0; }
+.trait-name { font-size: 13px; font-weight: 600; color: var(--t1); margin-bottom: 6px; }
+.trait-evidence { font-size: 13px; color: var(--t2); margin-bottom: 8px; line-height: 1.6; }
+.trait-divider { height: 1px; background: var(--b1); margin-bottom: 8px; }
+.trait-stronger { font-size: 12px; color: var(--t2); line-height: 1.6; }
+.trait-stronger strong { font-weight: 600; }
+
+.jd-row { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--b1); }
+.jd-row:last-child { border-bottom: none; }
+.jd-status-col { width: 130px; flex-shrink: 0; font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; padding-top: 2px; }
+.status-addressed { color: var(--tc); }
+.status-partial   { color: var(--warn); }
+.status-avoided   { color: var(--t2); }
+.status-fumbled   { color: var(--err); }
+.jd-right { flex: 1; min-width: 0; }
+.jd-requirement { font-size: 13px; font-weight: 600; color: var(--t1); margin-bottom: 3px; }
+.jd-note { font-size: 13px; color: var(--t2); line-height: 1.5; }
+
+.notes-container {
+  border: 1px dashed rgba(240,160,48,0.28);
+  border-radius: 6px;
+  background: rgba(240,160,48,0.03);
+  overflow: hidden;
+}
+.notes-header {
+  background: rgba(240,160,48,0.07);
+  border-bottom: 1px dashed rgba(240,160,48,0.18);
+  padding: 11px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.notes-header-text {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(240,160,48,0.6);
+  white-space: nowrap;
+}
+.notes-rule { flex: 1; height: 1px; background: rgba(240,160,48,0.12); }
+.note-item { padding: 15px 16px; border-bottom: 1px dashed rgba(240,160,48,0.12); }
+.note-item:last-child { border-bottom: none; }
+.note-label-c { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--t2); margin-bottom: 5px; }
+.note-quote { font-size: 13px; font-style: italic; color: #a07028; padding-left: 12px; border-left: 2px solid var(--b2); margin-bottom: 10px; line-height: 1.6; }
+.note-label-t { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(240,160,48,0.45); margin-bottom: 5px; }
+.note-thinking { font-size: 13px; color: rgba(240,160,48,0.85); padding: 9px 12px; background: rgba(240,160,48,0.06); border-radius: 4px; line-height: 1.6; }
+
+.work-card { display: flex; gap: 14px; background: var(--s1); border: 1px solid var(--b1); border-radius: 5px; padding: 14px 15px; margin-bottom: 8px; }
+.work-num { font-family: 'Courier New', monospace; font-size: 15px; font-weight: 700; color: var(--ac); width: 22px; flex-shrink: 0; }
+.work-body { flex: 1; min-width: 0; }
+.work-title { font-size: 13px; font-weight: 600; color: var(--t1); margin-bottom: 5px; }
+.work-detail { font-size: 13px; color: var(--t2); line-height: 1.6; }
+
+.action-buttons { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 28px; border-top: 1px solid var(--b1); }
+.btn-primary { background: var(--ac); color: #040810; font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 4px; border: none; cursor: pointer; transition: opacity 0.15s; }
+.btn-primary:hover { opacity: 0.86; }
+.btn-ghost { background: transparent; color: var(--t2); border: 1px solid var(--b2); border-radius: 4px; font-size: 13px; padding: 9px 18px; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.btn-ghost:hover { color: var(--t1); border-color: var(--t2); }
+
+/* ── Footer ── */
+#site-footer { border-top: 1px solid var(--b1); text-align: center; padding: 36px 24px 52px; }
+#site-footer p { font-size: 12px; color: var(--t2); margin-bottom: 6px; line-height: 1.6; }
+#site-footer p:last-child { margin-bottom: 0; }
+.footer-warn { color: var(--warn); text-decoration: none; }
+.footer-warn:hover { text-decoration: underline; }
+.footer-muted { color: var(--t2); text-decoration: none; }
+.footer-muted:hover { text-decoration: underline; }
+
+.hidden { display: none !important; }
+
+/* ── Mobile ── */
+@media (max-width: 620px) {
+  #setup-screen, #interview-screen, #feedback-screen { padding: 28px 16px 60px; }
+  .setup-grid { grid-template-columns: 1fr; }
+  .persona-card { padding: 10px 8px; }
+  #site-header { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<main>
+
+<!-- ══ SETUP ══ -->
+<div id="setup-screen">
+  <div class="setup-eyebrow">Interview Feedback Simulator</div>
+  <h1>The feedback you never get from real interviews.</h1>
+  <p class="setup-subtitle">Practice with AI interviewers who probe weak answers, track inconsistencies, and give you an honest post-session debrief. Detailed, honest, and tied to the job you applied for.</p>
+
+  <!-- two-col grid: expandables left, API key right -->
+  <div style="max-width:580px; margin:0 auto;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:start; margin-bottom:20px;">
+
+      <!-- LEFT: expandables -->
+      <div>
+        <div class="expandable" id="exp1" style="margin-bottom:10px;">
+          <button class="exp-trigger" aria-expanded="false" onclick="toggleExp('exp1')" style="margin-left:8px;">
+            <span class="exp-trigger-text">What makes this tool worth your time</span>
+            <span class="exp-arrow">▾</span>
+          </button>
+          <div class="exp-content" style="padding-left:8px;">
+            <div class="value-line"><span class="value-arrow">▸</span><span>Vague answers trigger follow-up questions until you go deeper</span></div>
+            <div class="value-line"><span class="value-arrow">▸</span><span>Inconsistencies across answers get flagged</span></div>
+            <div class="value-line"><span class="value-arrow">▸</span><span>Realistic interviewer behavior: silence, pushback, and neutral reactions only.</span></div>
+            <div class="value-line"><span class="value-arrow">▸</span><span>Every question is generated from your job description</span></div>
+            <div class="value-line"><span class="value-arrow">▸</span><span>Post-session evaluation: trait-by-trait, job description-matched</span></div>
+            <div class="value-line"><span class="value-arrow">▸</span><span>Interviewer's internal notes: what they were thinking at each key moment</span></div>
+            <div class="value-line"><span class="value-arrow">▸</span><span>Downloadable feedback report</span></div>
+          </div>
+        </div>
+
+        <div class="expandable" id="exp2" style="margin-bottom:10px;">
+          <button class="exp-trigger" aria-expanded="false" onclick="toggleExp('exp2')" style="margin-left:8px;">
+            <span class="exp-trigger-text">How to get started</span>
+            <span class="exp-arrow">▾</span>
+          </button>
+          <div class="exp-content" style="padding-left:8px;">
+            <div class="step-row"><span class="step-num">01</span><span>Go to <a href="https://console.anthropic.com" target="_blank" style="color: var(--ac); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">console.anthropic.com</a> and create a free account.</span></div>
+            <div class="step-row"><span class="step-num">02</span><span>In <strong>Credits</strong>, click <strong>Add funds</strong>.</span></div>
+            <div class="step-row"><span class="step-num">03</span><span>In the left sidebar, select <strong>API Keys</strong> and create a new key.</span></div>
+            <div class="step-row"><span class="step-num">04</span><span>Copy the key and paste it here, in the <strong>ANTHROPIC API KEY</strong> field.</span></div>
+            <div class="step-row"><span class="step-num">05</span><span>In <strong>JOB DESCRIPTION</strong>, paste the description of the role you're interviewing for.</span></div>
+            <div class="step-row"><span class="step-num">06</span><span>In <strong>WHO ARE YOU PRACTICING WITH?</strong>, pick an interviewer.</span></div>
+            <div class="step-row"><span class="step-num">07</span><span>Click <strong>Start Interview</strong>.</span></div>
+            <p style="font-size:12px; color:#a07028; font-style:italic; margin-top:12px;">API access is separate from Claude Pro – a claude.ai subscription does not cover this.</p>
+          </div>
+        </div>
+
+        <div class="expandable" id="exp3">
+          <button class="exp-trigger" aria-expanded="false" onclick="toggleExp('exp3')" style="margin-left:8px;">
+            <span class="exp-trigger-text">Cost per session</span>
+            <span class="exp-arrow">▾</span>
+          </button>
+          <div class="exp-content" style="padding-left:8px;">
+            <p class="cost-para">Runs in your browser. You pay Anthropic directly – no subscription, no markup.</p>
+            <p style="font-size:13px; color:#a07028; margin-bottom:10px;">One session = one complete interview with one persona, from the first question through the feedback report.</p>
+            <p style="font-size:12px; color:#a07028; font-family:'Courier New',monospace; margin-bottom:6px; font-weight:700;">Example:</p>
+            <div class="cost-mono">
+              Model: claude-sonnet-4-6<br>
+              ~10–12 exchanges + evaluation<br>
+              ~30k input tokens<br>
+              ~3k output tokens<br>
+              <span class="cost-highlight">≈ $0.10–0.20 per session</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: API key field -->
+      <div>
+        <label class="field-label" for="api-key-input">Anthropic API Key</label>
+        <div style="display:flex; gap:8px;">
+          <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" style="flex:1; min-width:0;">
+          <button id="key-vis-btn" onclick="toggleKeyVisibility()" style="background:transparent; border:1px solid var(--b2); border-radius:4px; padding:8px 10px; color:var(--t2); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:border-color 0.15s, color 0.15s; flex-shrink:0;" onmouseover="this.style.borderColor='var(--ac)';this.style.color='var(--ac)'" onmouseout="this.style.borderColor='var(--b2)';this.style.color='var(--t2)'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+          <button onclick="testApiKey()" style="background:transparent; border:1px solid var(--b2); border-radius:4px; color:var(--t2); font-size:12px; padding:8px 12px; cursor:pointer; white-space:nowrap; transition:border-color 0.15s, color 0.15s;" onmouseover="this.style.borderColor='var(--ac)';this.style.color='var(--ac)'" onmouseout="this.style.borderColor='var(--b2)';this.style.color='var(--t2)'">Test key</button>
+        </div>
+        <span id="key-feedback" style="display:none; font-size:12px; margin-top:5px;"></span>
+        <p style="font-size:12px; color:var(--t2); margin-top:6px;">Stored in your browser. Used exclusively to authenticate your requests to Anthropic's API.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- job description: centered, narrower -->
+  <div class="field-group" style="max-width:480px; margin:0 auto; margin-bottom:20px;">
+    <label class="field-label" for="jd-input">Job Description</label>
+    <textarea id="jd-input" style="min-height:90px; width:100%;" placeholder="Paste the full job description here. The more detail, the more targeted the questions."></textarea>
+
+  </div>
+
+  <!-- persona picker -->
+  <div class="field-group" style="margin-bottom:20px;">
+    <label class="field-label">Who are you practicing with?</label>
+    <div class="persona-grid">
+      <button class="persona-card" data-persona="recruiter" onclick="selectPersona('recruiter')">
+        <div class="persona-avatar" style="background:#40a0ff;">S</div>
+        <div class="persona-label" style="color:#40a0ff;">Recruiter</div>
+        <div class="persona-name">Sarah Chen</div>
+        <div class="persona-desc" style="color:rgba(64,160,255,0.5);">Probes narrative, motivation, and red flags. Wraps up in 8–10 exchanges.</div>
+      </button>
+      <button class="persona-card" data-persona="hiring_manager" onclick="selectPersona('hiring_manager')">
+        <div class="persona-avatar" style="background:#b06aff;">M</div>
+        <div class="persona-label" style="color:#b06aff;">Hiring Mgr</div>
+        <div class="persona-name">Marcus Webb</div>
+        <div class="persona-desc" style="color:rgba(176,106,255,0.5);">Probes specific examples, ownership language, and how you actually work.</div>
+      </button>
+      <button class="persona-card" data-persona="technical" onclick="selectPersona('technical')">
+        <div class="persona-avatar" style="background:#4edc50;">D</div>
+        <div class="persona-label" style="color:#4edc50;">Technical</div>
+        <div class="persona-name">Dana Kim</div>
+        <div class="persona-desc" style="color:rgba(78,220,80,0.5);">Probes domain depth, real tooling knowledge, and practical judgment.</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="error-msg" id="setup-error"></div>
+  <button id="start-btn" onclick="startInterview()">Start Interview</button>
+</div>
+
+<!-- ══ INTERVIEW ══ -->
+<div id="interview-screen" class="hidden">
+  <div class="interview-header">
+    <button onclick="goBack()" style="background:transparent; border:1px solid var(--b2); border-radius:4px; color:var(--t2); font-size:12px; padding:7px 14px; cursor:pointer; transition:color 0.15s, border-color 0.15s; flex-shrink:0;" onmouseover="this.style.color='var(--t1)';this.style.borderColor='var(--t3)'" onmouseout="this.style.color='var(--t2)';this.style.borderColor='var(--b2)'">← Back</button>
+    <div class="interviewer-info">
+      <div class="avatar-lg" id="iv-avatar"></div>
+      <div>
+        <div class="interviewer-name" id="iv-name"></div>
+        <div class="interviewer-role" id="iv-role"></div>
+      </div>
+    </div>
+    <button id="end-btn" onclick="endInterview()">End Interview</button>
+  </div>
+
+  <div id="messages-list"></div>
+
+  <div id="stream-slot">
+    <div class="avatar-sm" id="stream-avatar"></div>
+    <div class="msg-bubble" id="stream-bubble">
+      <span id="stream-text"></span><span class="cursor-blink"></span>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <textarea id="user-input" placeholder="Type your response…" rows="1"
+      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button id="send-btn" onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<!-- ══ EVALUATING ══ -->
+<div id="evaluating-screen" class="hidden">
+  <div class="spinner"></div>
+  <div class="eval-caption" id="eval-caption">Writing notes…</div>
+  <p style="font-size: 12px; color: var(--t3); margin-top: 10px; font-family: 'Courier New', monospace;">This can take a while. Please be patient.</p>
+</div>
+
+<!-- ══ FEEDBACK ══ -->
+<div id="feedback-screen" class="hidden"></div>
+
+</main>
+
+<footer style="max-width: 720px; margin: 0 auto; padding: 16px 24px 24px;">
+  <p style="font-size: 12px; color: var(--t2); text-align: center; padding-bottom: 10px; margin: 0;">Free to use · your API key stays in your browser · no data passes through any server</p>
+  <div style="border-top: 1px solid var(--b1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: 20px;">
+    <p style="font-size: 12px; color: var(--t2); margin: 0;">Built and designed by <a href="https://teokitten.github.io" target="_blank" style="color: var(--t2); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Teo Moldovanu</a> · © 2026</p>
+    <p style="font-size: 12px; color: var(--t2); margin: 0;">If this helped → <a href="https://ko-fi.com/teokitten" target="_blank" style="color: var(--warn); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">buy me a coffee ☕</a></p>
+  </div>
+</footer>
+
+<script>
+const S = {
+  phase: 'setup',
+  apiKey: '',
+  jd: '',
+  persona: null,
+  messages: [],
+  exchangeCount: 0,
+  evaluation: null,
+  busy: false
+};
+
+const PERSONAS = {
+  recruiter: {
+    id: 'recruiter', label: 'Recruiter', name: 'Sarah Chen',
+    initial: 'S', color: '#40a0ff',
+    traits: ['Narrative clarity','Motivation authenticity','Communication style','Red flags','Self-presentation']
+  },
+  hiring_manager: {
+    id: 'hiring_manager', label: 'Hiring Manager', name: 'Marcus Webb',
+    initial: 'M', color: '#b06aff',
+    traits: ['Specificity of examples','Ownership & accountability','Self-awareness','Handling failure','Collaboration signals']
+  },
+  technical: {
+    id: 'technical', label: 'Technical', name: 'Dana Kim',
+    initial: 'D', color: '#4edc50',
+    traits: ['Technical accuracy','Depth vs surface knowledge','Explaining complex concepts','Handling unknowns','Practical judgment']
+  }
+};
+
+function buildSystem(p, jd) {
+  const pre = `The position being interviewed for:\n\n---\n${jd}\n---\n\n`;
+  const body = {
+    recruiter:
+`You are Sarah Chen, a recruiter conducting a screening call.
+
+Your goal: decide whether this candidate advances to the hiring manager. You are professional, efficient, and hard to impress.
+
+ABSOLUTE RULES – never break these:
+- Ask ONE question at a time. One.
+- React specifically to what the candidate just said. If vague, probe it before moving on.
+- Vague answer → probe: "Can you be more specific?" / "What does that look like in practice?" / "Give me a concrete example."
+- Contradiction → call it out: "Earlier you mentioned [X]. That seems to conflict with what you just said – can you help me reconcile those?"
+- NEVER validate: no "great answer," "that's interesting," "wonderful." Neutral only: "I see." "Okay." "Right." "Got it."
+- Do NOT coach, hint, or break character. You assess. You don't help.
+- After 8–10 exchanges, wrap up: "That's everything I needed. I'll share my notes with the team – we'll be in touch." Nothing further.
+
+AREAS TO COVER:
+– Career narrative: why this move, why now, what's the through-line
+– Motivation: why this role specifically – watch for generic answers
+– Logistics if relevant: availability, location, notice period
+– Red flags: gaps, short tenures, vague role descriptions
+– Communication: how clearly do they express themselves?
+
+Begin with one sentence of intro (name only) and your first question.`,
+
+    hiring_manager:
+`You are Marcus Webb, a senior hiring manager. The recruiter has passed this candidate through. You are conducting the substantive interview.
+
+You're assessing whether this person can actually do the work and raise the bar on your team. You're not re-screening – you're going deeper.
+
+ABSOLUTE RULES:
+- Ask ONE question at a time.
+- You want specifics. "We improved documentation" is not an answer. Push: what exactly, what changed, what was the outcome, how measured?
+- When you hear "we" instead of "I": follow up. "What specifically was your contribution?" People hide in "we."
+- Vague achievements → probe: "What was the baseline?" "What did you change?" "How did you know it worked?"
+- NEVER validate: no "great point," no "exactly." Neutral: "okay," "I see," "right," "go on."
+- Do NOT coach. If they don't know something, move on. The silence is information.
+- Ask at least one question about failure or what they'd do differently.
+- After 10–12 exchanges, close: "That's what I needed. I'll sync with the team – we'll be in touch."
+
+AREAS TO PROBE:
+– Specific work directly relevant to job description requirements – real projects, real outcomes
+– How they work: process, prioritization under pressure, handling ambiguity
+– Ownership language vs passive language
+– Self-awareness: failure, honest limits, what they'd do differently
+– Collaboration with engineers, PMs, UX – push for specifics
+
+One-sentence intro. You've seen the recruiter's notes; don't re-ask basic screening questions.`,
+
+    technical:
+`You are Dana Kim, a senior technical team member conducting the technical interview.
+
+You're assessing whether this person has the depth to operate independently. You want to understand how they think, not just what they know.
+
+ABSOLUTE RULES:
+- Ask ONE question at a time.
+- Ground questions in the job description. Generic technical questions are lazy.
+- When they name a tool or process, go one level deeper: "You mentioned X – walk me through exactly how that worked."
+- "I don't know" is acceptable. Always follow with: "What would you do to find out?" or "How would you approach figuring that out?"
+- NEVER validate or correct during the interview. If they get something wrong, note it and move on.
+- Push for precision: "I worked with APIs" → "What kinds? REST or GraphQL? What were you documenting? What was the hardest part to explain to a non-technical audience?"
+- Give at least one scenario question tied to the role.
+- After 10–12 exchanges, close: "That's everything from me. I'll share my notes with the team."
+
+AREAS TO PROBE:
+– Core technical skills from the job description, one at a time, with depth
+– Tools they claim experience with – make them demonstrate the claim
+– How they handle unknowns
+– Decision-making: why they chose one approach over another
+– One realistic scenario question
+
+One-sentence intro, then straight into your first question.`
+  };
+  return pre + body[p.id];
+}
+
+function buildEvalSystem(p, jd) {
+  return `You conducted a ${p.label} interview for this position:\n\n---\n${jd}\n---\n\nProduce a detailed, honest post-interview feedback report in JSON. This is the feedback the candidate will never receive from a real interview. Be specific, critical where warranted, genuinely useful. Do not soften findings.\n\nReturn ONLY valid JSON. No preamble. No markdown fences. Start directly with {\n\n{\n  "overall_impression": "One honest paragraph: what you'd write in your internal notes. Would you advance this candidate? Say so directly.",\n  "would_advance": true or false,\n  "traits": [\n    {\n      "name": "trait name",\n      "rating": "Strong" or "Adequate" or "Weak",\n      "evidence": "The specific moment from the transcript that led to this rating. Quote the candidate where useful.",\n      "stronger_would_be": "Concretely what a stronger answer would have looked like."\n    }\n  ],\n  "jd_match": [\n    {\n      "requirement": "A key requirement from the job description",\n      "status": "Addressed well" or "Partially addressed" or "Avoided" or "Fumbled",\n      "note": "Brief, specific observation"\n    }\n  ],\n  "internal_notes": [\n    {\n      "candidate_said": "Exact or near-exact quote",\n      "thinking": "Your honest internal reaction at that moment. Not what you\'d say out loud. Be specific. Occasionally harsh if warranted."\n    }\n  ],\n  "work_on": [\n    {\n      "title": "Short label",\n      "detail": "Specific, actionable guidance referencing what they actually said. Not generic advice."\n    }\n  ]\n}\n\nTraits for ${p.label}: ${p.traits.join(', ')}.\n\nInternal notes: 5–7 key moments, positive and negative. These are the moments where your real assessment formed. Make them worth reading.\nJob description match: extract 4–6 key requirements from the job description.\nWork on: 3–5 items tied to actual moments in the conversation. Reference exact quotes or situations.`;
+}
+
+// Init
+function updateKeyFeedback(val) {
+  const fb = document.getElementById('key-feedback');
+  if (!val) {
+    fb.style.display = 'none';
+    fb.textContent = '';
+  } else if (val.startsWith('sk-ant-') && val.length >= 50) {
+    fb.style.display = 'block';
+    fb.style.color = 'var(--tc)';
+    fb.textContent = '✓ Saved to your browser';
+  } else {
+    fb.style.display = 'block';
+    fb.style.color = 'var(--err)';
+    fb.textContent = '⚠ This doesn\'t look like an Anthropic API key – it should start with sk-ant-';
+  }
+}
+
+async function testApiKey() {
+  const fb = document.getElementById('key-feedback');
+  if (!S.apiKey || !S.apiKey.startsWith('sk-ant-') || S.apiKey.length < 50) {
+    fb.style.display = 'block';
+    fb.style.color = 'var(--err)';
+    fb.textContent = 'Enter a key first.';
+    return;
+  }
+  fb.style.display = 'block';
+  fb.style.color = 'var(--t2)';
+  fb.textContent = 'Testing…';
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'x-api-key': S.apiKey
+      },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] })
+    });
+    if (resp.ok) {
+      fb.style.color = 'var(--tc)';
+      fb.textContent = '✓ Key is valid';
+    } else {
+      const d = await resp.json().catch(() => ({}));
+      fb.style.color = 'var(--err)';
+      const errMsg = d.error?.message || 'Invalid key';
+      const isBilling = /credit balance|billing|insufficient/i.test(errMsg);
+      fb.textContent = '✗ ' + (isBilling ? 'Your Anthropic account has no credits. Go to console.anthropic.com, find Credits in the left sidebar, and click Add funds.' : errMsg);
+    }
+  } catch (_) {
+    fb.style.color = 'var(--err)';
+    fb.textContent = '✗ Could not reach Anthropic – check your connection.';
+  }
+}
+
+const SVG_EYE_CLOSED = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+const SVG_EYE_OPEN  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+
+function toggleKeyVisibility() {
+  const inp = document.getElementById('api-key-input');
+  const btn = document.getElementById('key-vis-btn');
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  btn.innerHTML = isHidden ? SVG_EYE_OPEN : SVG_EYE_CLOSED;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('ifs_key');
+  if (saved) { S.apiKey = saved; document.getElementById('api-key-input').value = saved; }
+  document.getElementById('api-key-input').addEventListener('input', e => {
+    S.apiKey = e.target.value.trim();
+    localStorage.setItem('ifs_key', S.apiKey);
+    updateKeyFeedback(S.apiKey);
+  });
+});
+
+function goBack() {
+  showPhase('setup');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleExp(id) {
+  const el = document.getElementById(id);
+  const trigger = el.querySelector('.exp-trigger');
+  const content = el.querySelector('.exp-content');
+  const open = content.classList.toggle('open');
+  trigger.setAttribute('aria-expanded', String(open));
+}
+
+function selectPersona(id) {
+  S.persona = id;
+  document.querySelectorAll('.persona-card').forEach(c => {
+    const match = c.dataset.persona === id;
+    c.classList.toggle('selected', match);
+    c.style.borderColor = match ? PERSONAS[id].color : '';
+  });
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+function showPhase(phase) {
+  S.phase = phase;
+  ['setup-screen','interview-screen','evaluating-screen','feedback-screen'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
+  const map = { setup:'setup-screen', interview:'interview-screen', evaluating:'evaluating-screen', feedback:'feedback-screen' };
+  document.getElementById(map[phase]).classList.remove('hidden');
+  const labels = { setup:'Setup', interview:'Interview in Progress', evaluating:'Generating Feedback…', feedback:'Feedback Report' };
+}
+
+async function startInterview() {
+  const jd = document.getElementById('jd-input').value.trim();
+  const err = document.getElementById('setup-error');
+  err.classList.remove('visible');
+  if (!jd) { err.textContent = 'Please paste a job description.'; err.classList.add('visible'); return; }
+  if (!S.persona) { err.textContent = 'Please select an interviewer.'; err.classList.add('visible'); return; }
+
+  S.jd = jd;
+  S.messages = [];
+  S.exchangeCount = 0;
+  S.evaluation = null;
+
+  const p = PERSONAS[S.persona];
+  const av = document.getElementById('iv-avatar');
+  av.textContent = p.initial; av.style.background = p.color;
+  document.getElementById('iv-name').textContent = p.name;
+  document.getElementById('iv-role').textContent = p.label;
+  const sav = document.getElementById('stream-avatar');
+  sav.textContent = p.initial; sav.style.background = p.color;
+  document.getElementById('messages-list').innerHTML = '';
+
+  showPhase('interview');
+  S.busy = true; setControls();
+  await streamTurn([{ role: 'user', content: 'Hello. I am ready to begin.' }], true);
+}
+
+async function sendMessage() {
+  if (S.busy) return;
+  const inp = document.getElementById('user-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = ''; autoResize(inp);
+  const msg = { role: 'user', content: text };
+  S.messages.push(msg);
+  appendMsg(msg);
+  S.busy = true; setControls();
+  await streamTurn([...S.messages], false);
+}
+
+async function streamTurn(apiMessages, silent) {
+  const p = PERSONAS[S.persona];
+  showStream(true);
+  document.getElementById('stream-text').textContent = '';
+
+  try {
+    const headers = {
+      'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    };
+    if (S.apiKey) headers['x-api-key'] = S.apiKey;
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers,
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 800, stream: true, system: buildSystem(p, S.jd), messages: apiMessages })
+    });
+
+    if (!resp.ok) {
+      const d = await resp.json().catch(() => ({}));
+      throw new Error(d.error?.message || `API error ${resp.status}`);
+    }
+
+    let fullText = '';
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n'); buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') continue;
+        try {
+          const evt = JSON.parse(raw);
+          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            fullText += evt.delta.text;
+            document.getElementById('stream-text').textContent = fullText;
+          }
+        } catch (_) {}
+      }
+    }
+
+    showStream(false);
+    if (fullText) {
+      const aiMsg = { role: 'assistant', content: fullText };
+      S.messages.push(aiMsg);
+      appendMsg(aiMsg);
+      if (!silent) S.exchangeCount++;
+    }
+  } catch (err) {
+    showStream(false);
+    const d = document.createElement('div');
+    d.className = 'stream-error';
+    d.textContent = 'Error: ' + err.message;
+    document.getElementById('messages-list').appendChild(d);
+  }
+
+  S.busy = false; setControls();
+}
+
+function appendMsg(msg) {
+  const p = PERSONAS[S.persona];
+  const isUser = msg.role === 'user';
+  const list = document.getElementById('messages-list');
+  const row = document.createElement('div');
+  row.className = 'msg-row' + (isUser ? ' user' : '');
+  const av = document.createElement('div');
+  av.className = 'avatar-sm' + (isUser ? ' user-av' : '');
+  if (isUser) { av.textContent = 'You'; }
+  else { av.textContent = p.initial; av.style.background = p.color; av.style.color = '#040810'; }
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble' + (isUser ? ' user-bubble' : '');
+  bubble.innerHTML = esc(msg.content);
+  row.appendChild(av); row.appendChild(bubble);
+  list.appendChild(row);
+  row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function showStream(v) {
+  const s = document.getElementById('stream-slot');
+  s.classList.toggle('visible', v);
+  if (v) s.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function setControls() {
+  document.getElementById('send-btn').disabled = S.busy;
+  document.getElementById('user-input').disabled = S.busy;
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+function endInterview() {
+  if (S.exchangeCount < 2) {
+    if (!confirm(`You've only had ${S.exchangeCount} exchange(s). End anyway and generate feedback?`)) return;
+  }
+  showPhase('evaluating');
+  document.getElementById('eval-caption').textContent = PERSONAS[S.persona].name + ' is writing their notes…';
+  generateEval();
+}
+
+async function generateEval() {
+  const p = PERSONAS[S.persona];
+  const transcript = S.messages.map(m =>
+    (m.role === 'user' ? 'CANDIDATE' : p.name.toUpperCase()) + ': ' + m.content
+  ).join('\n\n');
+
+  try {
+    const headers = {
+      'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    };
+    if (S.apiKey) headers['x-api-key'] = S.apiKey;
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers,
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 4000, stream: false,
+        system: buildEvalSystem(p, S.jd),
+        messages: [{ role: 'user', content: 'Here is the interview transcript:\n\n' + transcript }]
+      })
+    });
+
+    if (!resp.ok) {
+      const d = await resp.json().catch(() => ({}));
+      throw new Error(d.error?.message || `API error ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const raw = data.content?.[0]?.text || '';
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Could not parse evaluation – unexpected response format.');
+    S.evaluation = JSON.parse(match[0]);
+    renderFeedback();
+    showPhase('feedback');
+  } catch (err) {
+    alert('Error generating feedback: ' + err.message);
+    showPhase('interview');
+  }
+}
+
+function renderFeedback() {
+  const p = PERSONAS[S.persona];
+  const ev = S.evaluation;
+
+  const advBadge = ev.would_advance
+    ? `<span class="badge badge-advance">✓ Would advance</span>`
+    : `<span class="badge badge-no-advance">✗ Would not advance</span>`;
+
+  const traits = (ev.traits || []).map(t => {
+    const rc = { Strong:'rating-strong', Adequate:'rating-adequate', Weak:'rating-weak' }[t.rating] || 'rating-adequate';
+    return `<div class="trait-card">
+      <div class="trait-rating-col"><span class="rating-badge ${rc}">${esc(t.rating)}</span></div>
+      <div class="trait-content">
+        <div class="trait-name">${esc(t.name)}</div>
+        <div class="trait-evidence">${esc(t.evidence)}</div>
+        <div class="trait-divider"></div>
+        <div class="trait-stronger"><strong>Stronger: </strong>${esc(t.stronger_would_be)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const jdRows = (ev.jd_match || []).map(j => {
+    const sc = { 'Addressed well':'status-addressed','Partially addressed':'status-partial','Avoided':'status-avoided','Fumbled':'status-fumbled' }[j.status] || 'status-avoided';
+    return `<div class="jd-row">
+      <div class="jd-status-col ${sc}">${esc(j.status)}</div>
+      <div class="jd-right">
+        <div class="jd-requirement">${esc(j.requirement)}</div>
+        <div class="jd-note">${esc(j.note)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const notes = (ev.internal_notes || []).map(n => `
+    <div class="note-item">
+      <div class="note-label-c">Candidate Said</div>
+      <div class="note-quote">${esc(n.candidate_said)}</div>
+      <div class="note-label-t">What I Was Thinking</div>
+      <div class="note-thinking">${esc(n.thinking)}</div>
+    </div>`).join('');
+
+  const workCards = (ev.work_on || []).map((w, i) => `
+    <div class="work-card">
+      <div class="work-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="work-body">
+        <div class="work-title">${esc(w.title)}</div>
+        <div class="work-detail">${esc(w.detail)}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('feedback-screen').innerHTML = `
+    <div class="fb-header">
+      <div class="fb-eyebrow">Post-Interview Feedback</div>
+      <h1>Session with ${esc(p.name)}</h1>
+      <div class="badge-row">
+        ${advBadge}
+        <span class="badge badge-neutral">${esc(p.label)}</span>
+        <span class="badge badge-neutral">${S.exchangeCount} exchanges</span>
+      </div>
+    </div>
+
+    <div class="fb-section">
+      <div class="section-title">Overall Impression</div>
+      <div class="impression-box">${esc(ev.overall_impression)}</div>
+    </div>
+
+    <div class="fb-section">
+      <div class="section-title">Trait Evaluation</div>
+      ${traits}
+    </div>
+
+    <div class="fb-section">
+      <div class="section-title">Job Description Match Analysis</div>
+      ${jdRows}
+    </div>
+
+    <div class="fb-section">
+      <div class="section-title">The Interviewer's Internal Notes</div>
+      <div class="notes-container">
+        <div class="notes-header">
+          <span class="notes-header-text">Internal Only – Not Shared With Candidate</span>
+          <div class="notes-rule"></div>
+        </div>
+        ${notes}
+      </div>
+    </div>
+
+    <div class="fb-section">
+      <div class="section-title">What To Work On</div>
+      ${workCards}
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn-primary" onclick="downloadFeedback()">↓ Download feedback</button>
+      <button class="btn-ghost" onclick="tryDifferent()">Try a different interviewer</button>
+      <button class="btn-ghost" onclick="startOver()">Start over</button>
+    </div>
+  `;
+}
+
+function tryDifferent() {
+  S.messages = []; S.exchangeCount = 0; S.evaluation = null; S.persona = null;
+  document.querySelectorAll('.persona-card').forEach(c => { c.classList.remove('selected'); c.style.borderColor = ''; });
+  document.getElementById('jd-input').value = S.jd;
+  showPhase('setup');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function startOver() {
+  S.messages = []; S.exchangeCount = 0; S.evaluation = null; S.persona = null; S.jd = '';
+  document.querySelectorAll('.persona-card').forEach(c => { c.classList.remove('selected'); c.style.borderColor = ''; });
+  document.getElementById('jd-input').value = '';
+  showPhase('setup');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function downloadFeedback() {
+  const p = PERSONAS[S.persona];
+  const ev = S.evaluation;
+
+  function eh(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+  }
+
+  const advBadge = ev.would_advance
+    ? `<span style="background:#e6faf3;color:#1a7a4a;border:1px solid #a8d9bc;padding:4px 10px;border-radius:3px;font-family:monospace;font-size:11px;font-weight:700;">✓ Would advance</span>`
+    : `<span style="background:#ffeaea;color:#c0392b;border:1px solid #f5b7b1;padding:4px 10px;border-radius:3px;font-family:monospace;font-size:11px;font-weight:700;">✗ Would not advance</span>`;
+
+  const traits = (ev.traits || []).map(t => {
+    const rs = { Strong:'background:#e6faf3;color:#1a7a4a;', Adequate:'background:#fef9ec;color:#9a6f00;', Weak:'background:#ffeaea;color:#c0392b;' }[t.rating] || 'background:#fef9ec;color:#9a6f00;';
+    return `<div style="display:flex;gap:14px;border:1px solid #dde;border-radius:5px;padding:15px;margin-bottom:8px;">
+      <div style="width:78px;flex-shrink:0;"><span style="${rs}font-family:monospace;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 7px;border-radius:3px;">${eh(t.rating)}</span></div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:#1a1a2e;">${eh(t.name)}</div>
+        <div style="font-size:13px;color:#555;margin-bottom:8px;line-height:1.6;">${eh(t.evidence)}</div>
+        <div style="height:1px;background:#dde;margin-bottom:8px;"></div>
+        <div style="font-size:12px;color:#666;line-height:1.6;"><strong>Stronger: </strong>${eh(t.stronger_would_be)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const jdRows = (ev.jd_match || []).map(j => {
+    const sc = {'Addressed well':'#1a7a4a','Partially addressed':'#9a6f00','Avoided':'#888','Fumbled':'#c0392b'}[j.status]||'#888';
+    return `<div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid #dde;">
+      <div style="width:130px;flex-shrink:0;font-family:monospace;font-size:11px;font-weight:700;color:${sc};padding-top:2px;">${eh(j.status)}</div>
+      <div><div style="font-size:13px;font-weight:600;margin-bottom:3px;color:#1a1a2e;">${eh(j.requirement)}</div><div style="font-size:13px;color:#555;">${eh(j.note)}</div></div>
+    </div>`;
+  }).join('');
+
+  const notes = (ev.internal_notes || []).map(n => `
+    <div style="padding:15px 16px;border-bottom:1px dashed #d4a030;">
+      <div style="font-family:monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin-bottom:5px;">Candidate Said</div>
+      <div style="font-size:13px;font-style:italic;color:#7a5518;padding-left:12px;border-left:2px solid #d4a030;margin-bottom:10px;line-height:1.6;">${eh(n.candidate_said)}</div>
+      <div style="font-family:monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#b8860b;margin-bottom:5px;">What I Was Thinking</div>
+      <div style="font-size:13px;color:#8a6010;padding:9px 12px;background:rgba(212,160,48,0.1);border-radius:4px;line-height:1.6;">${eh(n.thinking)}</div>
+    </div>`).join('');
+
+  const workCards = (ev.work_on || []).map((w, i) => `
+    <div style="display:flex;gap:14px;border:1px solid #dde;border-radius:5px;padding:14px 15px;margin-bottom:8px;">
+      <div style="font-family:monospace;font-size:15px;font-weight:700;color:#d4940a;width:22px;flex-shrink:0;">${String(i+1).padStart(2,'0')}</div>
+      <div><div style="font-size:13px;font-weight:600;margin-bottom:5px;color:#1a1a2e;">${eh(w.title)}</div><div style="font-size:13px;color:#555;line-height:1.6;">${eh(w.detail)}</div></div>
+    </div>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Interview Feedback – ${eh(p.name)} – ${new Date().toLocaleDateString()}</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:system-ui,-apple-system,sans-serif;color:#1a1a2e;background:#fff;line-height:1.5;}
+  .page{max-width:820px;margin:0 auto;padding:48px 32px 80px;}
+  h1{font-size:22px;font-weight:700;margin-bottom:8px;}
+  .st{font-family:monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#888;padding-bottom:10px;border-bottom:1px solid #dde;margin-bottom:16px;}
+  .sec{margin-bottom:40px;}
+  @media print{.page{padding:24px;}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div style="padding-bottom:28px;border-bottom:1px solid #dde;margin-bottom:36px;">
+    <div style="font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.16em;color:#888;margin-bottom:6px;">Post-Interview Feedback</div>
+    <h1>Session with ${eh(p.name)}</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      ${advBadge}
+      <span style="background:#f0f0f8;color:#666;border:1px solid #dde;padding:4px 10px;border-radius:3px;font-family:monospace;font-size:11px;font-weight:700;">${eh(p.label)}</span>
+      <span style="background:#f0f0f8;color:#666;border:1px solid #dde;padding:4px 10px;border-radius:3px;font-family:monospace;font-size:11px;font-weight:700;">${S.exchangeCount} exchanges</span>
+    </div>
+  </div>
+  <div class="sec"><div class="st">Overall Impression</div><div style="border:1px solid #dde;border-radius:5px;padding:18px 20px;font-size:15px;line-height:1.72;">${eh(ev.overall_impression)}</div></div>
+  <div class="sec"><div class="st">Trait Evaluation</div>${traits}</div>
+  <div class="sec"><div class="st">Job Description Match Analysis</div><div style="border-top:1px solid #dde;">${jdRows}</div></div>
+  <div class="sec">
+    <div class="st">The Interviewer's Internal Notes</div>
+    <div style="border:1px dashed #d4a030;border-radius:6px;background:#fffdf0;overflow:hidden;">
+      <div style="background:rgba(212,160,48,0.1);border-bottom:1px dashed #d4a030;padding:11px 16px;">
+        <span style="font-family:monospace;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(160,100,0,0.7);">Internal Only – Not Shared With Candidate</span>
+      </div>
+      ${notes}
+    </div>
+  </div>
+  <div class="sec"><div class="st">What To Work On</div>${workCards}</div>
+  <div style="padding-top:28px;border-top:1px solid #dde;font-size:12px;color:#aaa;text-align:center;">
+    Generated by Interview Feedback Simulator · teokitten.github.io/interview-feedback
+  </div>
+</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `interview-feedback-${p.id}-${Date.now()}.html`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+</script>
+</body>
+</html>
