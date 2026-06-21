@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interview Feedback Simulator – Demo</title>
+  <style>
+    :root {
+      --bg:#040810;--s1:#080d1c;--s2:#0c1225;--s3:#111828;
+      --b1:#111828;--b2:#1a2440;
+      --t1:#c8d4f0;--t2:#6070a0;--t3:#404860;
+      --ac:#f0a030;--r:#40a0ff;--tc:#4edc50;--err:#ff5c5c;--warn:#f0a030;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:13px;line-height:1.6;width:800px;height:500px;overflow:hidden;position:relative;}
+
+    .screen{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;pointer-events:none;transition:opacity 0.35s ease;}
+    .screen.on{opacity:1;pointer-events:auto;}
+
+    /* SETUP */
+    #sc-setup{padding:28px 36px;overflow:hidden;}
+    .eye{font-size:10px;font-family:monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ac);opacity:.7;margin-bottom:8px;}
+    .h1{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.18;margin-bottom:8px;}
+    .sub{font-size:12px;color:var(--t2);margin-bottom:20px;max-width:460px;}
+    .fl{font-size:10px;font-family:monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--t2);margin-bottom:6px;display:block;}
+    .jd-mock{background:var(--s1);border:1px solid var(--b2);border-radius:5px;padding:9px 12px;font-size:12px;color:var(--t2);max-width:460px;height:52px;overflow:hidden;margin-bottom:16px;}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:460px;margin-bottom:20px;}
+    .card{border:1px solid var(--b1);border-radius:6px;padding:11px 10px;background:var(--s1);}
+    .card.sel{border-color:var(--r);background:var(--s2);}
+    .cav{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:monospace;color:#040810;margin-bottom:6px;}
+    .clbl{font-size:12px;font-weight:600;}
+    .cnm{font-size:10px;font-family:monospace;color:var(--t2);margin-bottom:3px;}
+    .cdsc{font-size:11px;color:var(--t2);line-height:1.4;}
+    .sbtn{display:block;width:fit-content;margin:0 auto;padding:9px 26px;background:var(--ac);color:#040810;border-radius:5px;font-size:13px;font-weight:700;}
+
+    /* INTERVIEW */
+    #sc-iw{display:flex;flex-direction:column;height:500px;}
+    .iw-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;border-bottom:1px solid var(--b1);flex-shrink:0;}
+    .iw-who{display:flex;align-items:center;gap:10px;}
+    .iw-av{width:30px;height:30px;border-radius:50%;background:var(--r);color:#040810;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:monospace;}
+    .iw-nm{font-size:13px;font-weight:600;}
+    .iw-rl{font-size:10px;font-family:monospace;color:var(--t2);}
+    .iw-end{padding:5px 12px;background:transparent;border:1px solid var(--b2);border-radius:4px;color:var(--t2);font-size:11px;}
+    .msgs{flex:1;padding:16px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+    .msg{display:flex;gap:9px;align-items:flex-start;animation:fu .2s ease;}
+    .msg.user{flex-direction:row-reverse;}
+    @keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+    .mav{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:monospace;flex-shrink:0;margin-top:2px;}
+    .mav.ai{background:var(--r);color:#040810;}
+    .mav.user{background:var(--s3);color:var(--t2);}
+    .mbub{max-width:78%;padding:9px 13px;border-radius:6px;font-size:13px;line-height:1.6;}
+    .msg.ai .mbub{background:var(--s1);border:1px solid var(--b1);}
+    .msg.user .mbub{background:rgba(240,160,48,.08);border:1px solid rgba(240,160,48,.15);}
+    .cur{display:inline-block;width:2px;height:12px;background:var(--t2);margin-left:2px;vertical-align:text-bottom;animation:bl .85s step-end infinite;}
+    @keyframes bl{50%{opacity:0}}
+
+    /* EVALUATING */
+    #sc-eval{display:flex;flex-direction:column;align-items:center;justify-content:center;height:500px;gap:0;}
+    .spin{width:26px;height:26px;border:2px solid var(--b2);border-top-color:var(--ac);border-radius:50%;animation:sp .75s linear infinite;margin-bottom:14px;}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    .ecap{font-size:11px;font-family:monospace;color:var(--t2);letter-spacing:.1em;}
+    .enote{font-size:11px;font-family:monospace;color:var(--t3);margin-top:8px;}
+
+    /* FEEDBACK */
+    #sc-fb{height:500px;overflow:hidden;}
+    .fb-scr{height:100%;overflow-y:scroll;padding:20px 28px 40px;}
+    .fb-scr::-webkit-scrollbar{display:none;}
+    .fb-hd{padding-bottom:16px;border-bottom:1px solid var(--b1);margin-bottom:20px;}
+    .fb-eye{font-size:10px;font-family:monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--t2);margin-bottom:6px;}
+    .fb-h1{font-size:17px;font-weight:700;margin-bottom:8px;}
+    .bdgs{display:flex;gap:7px;flex-wrap:wrap;}
+    .bdg{display:inline-flex;align-items:center;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;font-family:monospace;}
+    .b-pass{background:rgba(78,220,80,.1);color:var(--tc);border:1px solid rgba(78,220,80,.25);}
+    .b-inf{background:var(--s2);color:var(--t2);border:1px solid var(--b1);}
+
+    .fbs{margin-bottom:22px;opacity:0;transform:translateY(8px);transition:opacity .4s ease,transform .4s ease;}
+    .fbs.show{opacity:1;transform:translateY(0);}
+    .fbt{font-size:10px;font-family:monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--t2);padding-bottom:7px;border-bottom:1px solid var(--b1);margin-bottom:10px;}
+
+    .overall-box{background:var(--s1);border:1px solid var(--b1);border-radius:5px;padding:13px 15px;font-size:12px;line-height:1.7;}
+
+    .trait{display:flex;gap:10px;background:var(--s1);border:1px solid var(--b1);border-radius:5px;padding:10px 12px;margin-bottom:5px;}
+    .tl{width:68px;flex-shrink:0;}
+    .rtg{display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;font-family:monospace;text-transform:uppercase;}
+    .r-s{background:rgba(78,220,80,.1);color:var(--tc);}
+    .r-a{background:rgba(240,160,48,.1);color:var(--warn);}
+    .r-w{background:rgba(255,92,92,.1);color:var(--err);}
+    .tnm{font-size:12px;font-weight:600;margin-bottom:3px;}
+    .tev{font-size:11px;color:var(--t2);}
+
+    .int-wrap{border:1px dashed rgba(240,160,48,.28);border-radius:6px;background:rgba(240,160,48,.03);overflow:hidden;}
+    .int-hd{display:flex;align-items:center;gap:9px;padding:8px 13px;background:rgba(240,160,48,.07);border-bottom:1px dashed rgba(240,160,48,.18);}
+    .int-st{font-family:monospace;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(240,160,48,.6);}
+    .int-rl{flex:1;height:1px;background:rgba(240,160,48,.12);}
+    .int-it{padding:11px 13px;border-bottom:1px dashed rgba(240,160,48,.12);}
+    .int-it:last-child{border-bottom:none;}
+    .icl{font-family:monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:3px;}
+    .ict{font-size:12px;font-style:italic;color:#a07028;padding-left:9px;border-left:2px solid var(--b2);margin-bottom:7px;}
+    .itl{font-family:monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,160,48,.45);margin-bottom:3px;}
+    .ith{font-size:12px;color:rgba(240,160,48,.85);padding:7px 10px;background:rgba(240,160,48,.06);border-radius:4px;line-height:1.55;}
+
+    .wi{display:flex;gap:10px;background:var(--s1);border:1px solid var(--b1);border-radius:5px;padding:10px 12px;margin-bottom:5px;}
+    .wn{font-family:monospace;font-size:14px;font-weight:700;color:var(--ac);width:18px;flex-shrink:0;}
+    .wt{font-size:12px;font-weight:600;margin-bottom:3px;}
+    .wd{font-size:11px;color:var(--t2);line-height:1.55;}
+
+    .wm{position:fixed;bottom:10px;right:14px;font-size:10px;font-family:monospace;color:var(--t3);opacity:.5;pointer-events:none;}
+  </style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="screen" id="sc-setup">
+  <div style="padding:18px 36px">
+    <div class="eye">Interview Feedback Simulator</div>
+    <div class="h1">The feedback you never get<br>from real interviews.</div>
+    <div class="sub" style="margin-bottom:14px">Practice with AI interviewers who probe weak answers, track inconsistencies, and give you an honest post-session debrief.</div>
+    <span class="fl">Job Description</span>
+    <div class="jd-mock" style="height:44px;margin-bottom:12px">Senior Software Developer – Python/Django, REST APIs, microservices, AWS. 5+ years. Strong system design fundamentals. Remote-friendly, Berlin-based product team…</div>
+    <span class="fl">Who are you practicing with?</span>
+    <div class="cards" style="margin-bottom:16px">
+      <div class="card sel">
+        <div class="cav" style="background:#40a0ff">S</div>
+        <div class="clbl" style="color:#40a0ff">Recruiter</div>
+        <div class="cnm">Sarah Chen</div>
+        <div class="cdsc">Probes narrative, motivation, and red flags.</div>
+      </div>
+      <div class="card">
+        <div class="cav" style="background:#b06aff">M</div>
+        <div class="clbl" style="color:#b06aff">Hiring Mgr</div>
+        <div class="cnm">Marcus Webb</div>
+        <div class="cdsc">Probes examples and ownership language.</div>
+      </div>
+      <div class="card">
+        <div class="cav" style="background:#4edc50">D</div>
+        <div class="clbl" style="color:#4edc50">Technical</div>
+        <div class="cnm">Dana Kim</div>
+        <div class="cdsc">Probes domain depth and tooling.</div>
+      </div>
+    </div>
+    <div class="sbtn">Start Interview</div>
+  </div>
+</div>
+
+<!-- INTERVIEW -->
+<div class="screen" id="sc-iw">
+  <div class="iw-hd">
+    <div class="iw-who">
+      <div class="iw-av">S</div>
+      <div><div class="iw-nm">Sarah Chen</div><div class="iw-rl">Recruiter</div></div>
+    </div>
+    <div class="iw-end">End Interview</div>
+  </div>
+  <div class="msgs" id="msgs"></div>
+</div>
+
+<!-- EVALUATING -->
+<div class="screen" id="sc-eval">
+  <div class="spin"></div>
+  <div class="ecap">Sarah Chen is writing her notes…</div>
+  <div class="enote">This can take a while. Please be patient.</div>
+</div>
+
+<!-- FEEDBACK -->
+<div class="screen" id="sc-fb">
+  <div class="fb-scr" id="fb-scr">
+    <div class="fb-hd">
+      <div class="fb-eye">Post-interview feedback</div>
+      <div class="fb-h1">Session with Sarah Chen</div>
+      <div class="bdgs">
+        <span class="bdg b-pass">✓ Would advance</span>
+        <span class="bdg b-inf">Recruiter</span>
+        <span class="bdg b-inf">3 exchanges</span>
+      </div>
+    </div>
+
+    <div class="fbs" id="s0">
+      <div class="fbt">Overall impression</div>
+      <div class="overall-box">Genuine technical depth when pushed, but the candidate leads with vague language and hides behind "we." The payment processor example – p99 latency from 800ms to 120ms – is strong work. It shouldn't have taken two follow-ups to surface. Would advance with reservations: ownership language needs work before the hiring manager round.</div>
+    </div>
+
+    <div class="fbs" id="s1">
+      <div class="fbt">Trait evaluation</div>
+      <div class="trait"><div class="tl"><span class="rtg r-a">Adequate</span></div><div><div class="tnm">Narrative clarity</div><div class="tev">"I was involved in most of the key decisions" – vague until pressed twice.</div></div></div>
+      <div class="trait"><div class="tl"><span class="rtg r-s">Strong</span></div><div><div class="tnm">Communication style</div><div class="tev">Recovered well under pressure. Technical vocabulary accurate and precise once specific.</div></div></div>
+      <div class="trait"><div class="tl"><span class="rtg r-w">Weak</span></div><div><div class="tnm">Motivation authenticity</div><div class="tev">Never reached – session ran out before covering why they want to leave.</div></div></div>
+      <div class="trait"><div class="tl"><span class="rtg r-a">Adequate</span></div><div><div class="tnm">Self-presentation</div><div class="tev">Initial vagueness created doubt that strong specifics later had to undo.</div></div></div>
+      <div class="trait"><div class="tl"><span class="rtg r-a">Adequate</span></div><div><div class="tnm">Red flags</div><div class="tev">"We" language resolved under pressure, but shouldn't have needed prompting.</div></div></div>
+    </div>
+
+    <div class="fbs" id="s2">
+      <div class="fbt">The interviewer's internal notes</div>
+      <div class="int-wrap">
+        <div class="int-hd"><span class="int-st">Internal only – not shared with candidate</span><div class="int-rl"></div></div>
+        <div class="int-it">
+          <div class="icl">Candidate said</div>
+          <div class="ict">"I was involved in most of the key decisions. We used microservices and I helped design that."</div>
+          <div class="itl">What I was thinking</div>
+          <div class="ith">Classic deflection. "Involved in" tells me nothing about what they actually did. Filing this.</div>
+        </div>
+        <div class="int-it">
+          <div class="icl">Candidate said</div>
+          <div class="ict">"p99 latency dropped from 800ms to under 120ms."</div>
+          <div class="itl">What I was thinking</div>
+          <div class="ith">Now we're talking. Nobody makes up p99 numbers. This is real work. Why wasn't this the opening answer?</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fbs" id="s3">
+      <div class="fbt">What to work on</div>
+      <div class="wi"><div class="wn">01</div><div><div class="wt">Lead with the outcome</div><div class="wd">The latency improvement should have been your opening. Start with the result, then explain how you got there.</div></div></div>
+      <div class="wi"><div class="wn">02</div><div><div class="wt">Replace "we" with "I" from the start</div><div class="wd">"We built" becomes "I built and coordinated with the team." Own your work before the interviewer has to ask.</div></div></div>
+      <div class="wi"><div class="wn">03</div><div><div class="wt">Don't wait to be extracted</div><div class="wd">Your best example came out under direct pressure. Practice surfacing specifics without prompting.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="wm">teokitten.github.io/interview-feedback</div>
+
+<script>
+const conv = [
+  {r:'ai', t:"Hi, I'm Sarah Chen. Walk me through your most recent role."},
+  {r:'user', t:"Senior backend dev at a fintech startup, three years. I owned the payment processing service – Python/Django, 2M transactions a month."},
+  {r:'ai', t:"What specifically was your contribution to the architecture?"},
+  {r:'user', t:"I was involved in most of the key decisions. We used microservices and I helped design that."},
+  {r:'ai', t:"Give me a specific decision you made and the outcome."},
+  {r:'user', t:"I pushed to split the payment processor out of the monolith. After the split, p99 latency dropped from 800ms to under 120ms."},
+];
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function typeMsg(role,text,speed){
+  return new Promise(resolve=>{
+    const msgs=document.getElementById('msgs');
+    const d=document.createElement('div');
+    d.className='msg '+role;
+    const av=document.createElement('div');
+    av.className='mav '+role;
+    av.textContent=role==='ai'?'S':'You';
+    const b=document.createElement('div');
+    b.className='mbub';
+    const sp=document.createElement('span');
+    const cur=document.createElement('span');
+    cur.className='cur';
+    b.appendChild(sp);b.appendChild(cur);
+    d.appendChild(av);d.appendChild(b);
+    msgs.appendChild(d);
+    msgs.scrollTop=msgs.scrollHeight;
+    let i=0;
+    const iv=setInterval(()=>{
+      sp.textContent+=text[i++];
+      msgs.scrollTop=msgs.scrollHeight;
+      if(i>=text.length){
+        clearInterval(iv);cur.remove();
+        setTimeout(resolve,280);
+      }
+    },speed);
+  });
+}
+
+async function run(){
+  show('sc-setup');
+  await sleep(1800);
+  show('sc-iw');
+  await sleep(300);
+
+  for(const m of conv){
+    await typeMsg(m.r,m.t,m.r==='ai'?13:9);
+  }
+
+  await sleep(500);
+  show('sc-eval');
+  await sleep(2200);
+
+  show('sc-fb');
+  await sleep(200);
+
+  for(let i=0;i<4;i++){
+    await sleep(i===0?150:550);
+    document.getElementById('s'+i).classList.add('show');
+  }
+
+  // Wait for all sections to fully render before measuring height
+  await sleep(800);
+  const sc=document.getElementById('fb-scr');
+  const total=sc.scrollHeight-sc.clientHeight;
+  const dur=10000;
+  const step=total/(dur/40);
+  let gone=0;
+  await new Promise(resolve=>{
+    const iv=setInterval(()=>{
+      sc.scrollTop+=step;
+      gone+=step;
+      if(gone>=total){
+        sc.scrollTop=total;
+        clearInterval(iv);resolve();
+      }
+    },40);
+  });
+
+  await sleep(2000);
+
+  const fbScreen=document.getElementById('sc-fb');
+  fbScreen.style.transition='opacity 0.6s ease';
+  fbScreen.style.opacity='0';
+  await sleep(650);
+
+  document.getElementById('msgs').innerHTML='';
+  document.querySelectorAll('.fbs').forEach(s=>s.classList.remove('show'));
+  sc.scrollTop=0;
+  fbScreen.style.opacity='';
+  fbScreen.style.transition='';
+  run();
+}
+
+run();
+</script>
+</body>
+</html>
