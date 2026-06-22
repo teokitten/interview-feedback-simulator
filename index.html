@@ -618,10 +618,10 @@ textarea::placeholder { color: var(--t2); }
             <span class="exp-arrow">▾</span>
           </button>
           <div class="exp-content" style="padding-left:8px;">
-            <div class="step-row"><span class="step-num">01</span><span>Go to <a href="https://console.anthropic.com" target="_blank" style="color: var(--ac); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">console.anthropic.com</a> and create a free account.</span></div>
-            <div class="step-row"><span class="step-num">02</span><span>In <strong>Credits</strong>, click <strong>Add funds</strong>.</span></div>
+            <div class="step-row"><span class="step-num">01</span><span>Create a free account at <a href="https://console.anthropic.com" target="_blank" style="color: var(--ac); text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">console.anthropic.com</a>.</span></div>
+            <div class="step-row"><span class="step-num">02</span><span>At the bottom of the sidebar, click <strong>Credits</strong> and add funds.</span></div>
             <div class="step-row"><span class="step-num">03</span><span>In the left sidebar, select <strong>API Keys</strong> and create a new key.</span></div>
-            <div class="step-row"><span class="step-num">04</span><span>Copy the key and paste it here, in the <strong>ANTHROPIC API KEY</strong> field.</span></div>
+            <div class="step-row"><span class="step-num">04</span><span>Copy the key and paste it in this app, in the <strong>ANTHROPIC API KEY</strong> field.</span></div>
             <div class="step-row"><span class="step-num">05</span><span>In <strong>JOB DESCRIPTION</strong>, paste the description of the role you're interviewing for.</span></div>
             <div class="step-row"><span class="step-num">06</span><span>In <strong>WHO ARE YOU PRACTICING WITH?</strong>, pick an interviewer.</span></div>
             <div class="step-row"><span class="step-num">07</span><span>Click <strong>Start Interview</strong>.</span></div>
@@ -666,8 +666,11 @@ textarea::placeholder { color: var(--t2); }
 
   <!-- job description: centered, narrower -->
   <div class="field-group" style="max-width:480px; margin:0 auto; margin-bottom:20px;">
-    <label class="field-label" for="jd-input">Job Description</label>
-    <textarea id="jd-input" style="min-height:90px; width:100%;" placeholder="Paste the full job description here. The more detail, the more targeted the questions."></textarea>
+    <div style="position:relative; display:flex; align-items:center;">
+      <label class="field-label" for="jd-input">Job Description</label>
+      <div class="error-msg" id="setup-error" style="position:absolute; left:50%; transform:translateX(-50%);"></div>
+    </div>
+    <textarea id="jd-input" style="min-height:90px; width:100%;" placeholder="Paste the full job description here. The more detail, the more targeted the questions." oninput="S.jd=this.value; const e=document.getElementById('setup-error'); if(e && this.value.trim()) { e.textContent=''; e.classList.remove('show'); }"></textarea>
 
   </div>
 
@@ -696,7 +699,6 @@ textarea::placeholder { color: var(--t2); }
     </div>
   </div>
 
-  <div class="error-msg" id="setup-error"></div>
   <button id="start-btn" onclick="startInterview()">Start Interview</button>
 </div>
 
