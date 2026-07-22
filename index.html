@@ -209,6 +209,11 @@ textarea {
 }
 textarea:focus { border-color: var(--ac); }
 textarea::placeholder { color: var(--t2); }
+textarea::-webkit-scrollbar, .msgs::-webkit-scrollbar { width: 10px; }
+textarea::-webkit-scrollbar-track, .msgs::-webkit-scrollbar-track { background: var(--bg); }
+textarea::-webkit-scrollbar-thumb, .msgs::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 5px; }
+textarea::-webkit-scrollbar-thumb:hover, .msgs::-webkit-scrollbar-thumb:hover { background: var(--t3); }
+textarea { scrollbar-color: var(--b2) var(--bg); scrollbar-width: thin; }
 
 /* ── Persona cards ── */
 .persona-grid {
@@ -445,6 +450,7 @@ textarea::placeholder { color: var(--t2); }
   margin: 0 auto;
   padding: 36px 24px 80px;
 }
+
 .section-title {
   font-family: 'Courier New', monospace;
   font-size: 11px;
@@ -608,6 +614,9 @@ textarea::placeholder { color: var(--t2); }
             <div class="value-line"><span class="value-arrow">▸</span><span>Every question is generated from your job description</span></div>
             <div class="value-line"><span class="value-arrow">▸</span><span>Post-session evaluation: trait-by-trait, job description-matched</span></div>
             <div class="value-line"><span class="value-arrow">▸</span><span>Interviewer's internal notes: what they were thinking at each key moment</span></div>
+            <div class="value-line"><span class="value-arrow">▸</span><span>Every feedback report includes your interview pattern – the underlying habit behind your weak moments, not just a list of what went wrong</span></div>
+            <div class="value-line"><span class="value-arrow">▸</span><span>Word-for-word answers for what to say next time, grounded only in details from your actual interview</span></div>
+            <div class="value-line"><span class="value-arrow">▸</span><span>Smart, job description-specific questions to ask your interviewer, generated on demand</span></div>
             <div class="value-line"><span class="value-arrow">▸</span><span>Downloadable feedback report</span></div>
           </div>
         </div>
@@ -623,8 +632,9 @@ textarea::placeholder { color: var(--t2); }
             <div class="step-row"><span class="step-num">03</span><span>In the left sidebar, select <strong>API Keys</strong> and create a new key.</span></div>
             <div class="step-row"><span class="step-num">04</span><span>Copy the key and paste it in this app, in the <strong>ANTHROPIC API KEY</strong> field.</span></div>
             <div class="step-row"><span class="step-num">05</span><span>In <strong>JOB DESCRIPTION</strong>, paste the description of the role you're interviewing for.</span></div>
-            <div class="step-row"><span class="step-num">06</span><span>In <strong>WHO ARE YOU PRACTICING WITH?</strong>, pick an interviewer.</span></div>
-            <div class="step-row"><span class="step-num">07</span><span>Click <strong>Start Interview</strong>.</span></div>
+            <div class="step-row"><span class="step-num">06</span><span>(Optional) Click <strong>Suggest questions</strong> to get smart questions to ask your interviewer, based on the job description.</span></div>
+            <div class="step-row"><span class="step-num">07</span><span>In <strong>WHO ARE YOU PRACTICING WITH?</strong>, pick an interviewer.</span></div>
+            <div class="step-row"><span class="step-num">08</span><span>Click <strong>Start Interview</strong>.</span></div>
             <p style="font-size:12px; color:#a07028; font-style:italic; margin-top:12px;">API access is separate from Claude Pro – a claude.ai subscription does not cover this.</p>
           </div>
         </div>
@@ -635,16 +645,14 @@ textarea::placeholder { color: var(--t2); }
             <span class="exp-arrow">▾</span>
           </button>
           <div class="exp-content" style="padding-left:8px;">
-            <p class="cost-para">Runs in your browser. You pay Anthropic directly – no subscription, no markup.</p>
-            <p style="font-size:13px; color:#a07028; margin-bottom:10px;">One session = one complete interview with one persona, from the first question through the feedback report.</p>
-            <p style="font-size:12px; color:#a07028; font-family:'Courier New',monospace; margin-bottom:6px; font-weight:700;">Example:</p>
-            <div class="cost-mono">
-              Model: claude-sonnet-5<br>
-              ~10–12 exchanges + evaluation<br>
-              ~30k input tokens<br>
-              ~3k output tokens<br>
-              <span class="cost-highlight">≈ $0.10–0.15 per session</span>
-            </div>
+            <p class="cost-para">This app runs in your browser using your own Anthropic API key. You pay Anthropic directly – no subscription, no markup, no fee to us.</p>
+
+            <p style="font-size:13px; color:#a07028; font-weight:700; margin-bottom:10px;">Example calculation:</p>
+            <ul style="list-style:none; padding:0; margin:0 0 12px 0;">
+              <li style="margin-bottom:10px; padding-left:14px; position:relative;"><span style="position:absolute;left:0;color:#a07028;">·</span><span style="font-size:13px; color:#a07028; line-height:1.6;"><strong>Interview + feedback report</strong> – the core experience. One complete interview with one persona, from the first question through your structured feedback report.<br><span class="cost-highlight">≈ $0.10–0.20</span></span></li>
+              <li style="padding-left:14px; position:relative;"><span style="position:absolute;left:0;color:#a07028;">·</span><span style="font-size:13px; color:#a07028; line-height:1.6;"><strong>Suggest questions</strong> <em>(optional)</em> – smart questions to ask your interviewer, generated from the job description. Can be run independently from the interview itself.<br><span class="cost-highlight">≈ $0.02–0.05</span></span></li>
+            </ul>
+            <p style="font-size:13px; color:#a07028; font-weight:700; margin-bottom:0;">Total: $0.12–0.25</p>
           </div>
         </div>
       </div>
@@ -664,14 +672,18 @@ textarea::placeholder { color: var(--t2); }
     </div>
   </div>
 
-  <!-- job description: centered, narrower -->
-  <div class="field-group" style="max-width:480px; margin:0 auto; margin-bottom:20px;">
-    <div style="position:relative; display:flex; align-items:center;">
+  <!-- job description + suggest questions: side by side -->
+  <div class="field-group" style="max-width:720px; margin:0 auto; margin-bottom:20px; display:flex; gap:20px; align-items:flex-start;">
+    <div style="flex:1.5; position:relative;">
       <label class="field-label" for="jd-input">Job Description</label>
-      <div class="error-msg" id="setup-error" style="position:absolute; left:50%; transform:translateX(-50%);"></div>
+      <div class="error-msg" id="setup-error" style="margin-bottom:8px;"></div>
+      <textarea id="jd-input" style="min-height:90px; width:100%;" placeholder="Paste the full job description here. The more detail, the more targeted the questions." oninput="S.jd=this.value; const e=document.getElementById('setup-error'); if(e && this.value.trim()) { e.textContent=''; e.classList.remove('show'); } S.suggestedQuestions=null; S.loadingQuestions=false; renderQuestions();"></textarea>
     </div>
-    <textarea id="jd-input" style="min-height:90px; width:100%;" placeholder="Paste the full job description here. The more detail, the more targeted the questions." oninput="S.jd=this.value; const e=document.getElementById('setup-error'); if(e && this.value.trim()) { e.textContent=''; e.classList.remove('show'); }"></textarea>
-
+    <div style="flex:1; padding-top:22px;">
+      <button id="get-questions-btn" onclick="getInterviewQuestions()" style="background:transparent;border:1px solid var(--ac);color:var(--ac);font-size:12px;font-weight:500;padding:8px 14px;border-radius:5px;cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:6px"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.4.9 1.1.9 1.8v.5h6.2v-.5c0-.7.3-1.4.9-1.8A7 7 0 0 0 12 2z"/></svg>Suggest questions</button>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--t2);"><span style="line-height:1;">ⓘ</span>Get a list of smart questions you can ask at the end of your real interview.</div>
+      <div id="questions-output" style="margin-top:10px;"></div>
+    </div>
   </div>
 
   <!-- persona picker -->
@@ -744,6 +756,8 @@ textarea::placeholder { color: var(--t2); }
 <!-- ══ FEEDBACK ══ -->
 <div id="feedback-screen" class="hidden"></div>
 
+<!-- ══ PREP ══ -->
+
 </main>
 
 <footer style="max-width: 720px; margin: 0 auto; padding: 16px 24px 24px;">
@@ -764,7 +778,9 @@ const S = {
   exchangeCount: 0,
   evaluation: null,
   busy: false,
-  interviewerWrappedUp: false
+  interviewerWrappedUp: false,
+  suggestedQuestions: null,
+  loadingQuestions: false
 };
 
 const PERSONAS = {
@@ -863,7 +879,7 @@ One-sentence intro, then straight into your first question.`
 }
 
 function buildEvalSystem(p, jd) {
-  return `You conducted a ${p.label} interview for this position:\n\n---\n${jd}\n---\n\nProduce a detailed, honest post-interview feedback report in JSON. This is the feedback the candidate will never receive from a real interview. Be specific, critical where warranted, genuinely useful. Do not soften findings.\n\nReturn ONLY valid JSON. No preamble. No markdown fences. Start directly with {\n\n{\n  "overall_impression": "One honest paragraph: what you'd write in your internal notes. Would you advance this candidate? Say so directly.",\n  "would_advance": true or false,\n  "traits": [\n    {\n      "name": "trait name",\n      "rating": "Strong" or "Adequate" or "Weak",\n      "evidence": "The specific moment from the transcript that led to this rating. Quote the candidate where useful.",\n      "stronger_would_be": "Concretely what a stronger answer would have looked like."\n    }\n  ],\n  "jd_match": [\n    {\n      "requirement": "A key requirement from the job description",\n      "status": "Addressed well" or "Partially addressed" or "Avoided" or "Fumbled",\n      "note": "Brief, specific observation"\n    }\n  ],\n  "internal_notes": [\n    {\n      "candidate_said": "Exact or near-exact quote",\n      "thinking": "Your honest internal reaction at that moment. Not what you\'d say out loud. Be specific. Occasionally harsh if warranted."\n    }\n  ],\n  "work_on": [\n    {\n      "title": "Short label",\n      "detail": "Specific, actionable guidance referencing what they actually said. Not generic advice."\n    }\n  ]\n}\n\nTraits for ${p.label}: ${p.traits.join(', ')}.\n\nInternal notes: 5–7 key moments, positive and negative. These are the moments where your real assessment formed. Make them worth reading.\nJob description match: extract 4–6 key requirements from the job description.\nWork on: 3–5 items tied to actual moments in the conversation. Reference exact quotes or situations.`;
+  return `You conducted a ${p.label} interview for this position:\n\n---\n${jd}\n---\n\nProduce a detailed, honest post-interview feedback report in JSON. This is the feedback the candidate will never receive from a real interview. Be specific, critical where warranted, genuinely useful. Do not soften findings.\n\nReturn ONLY valid JSON. No preamble. No markdown fences. Start directly with {\n\n{\n  "overall_impression": "One honest paragraph: what you'd write in your internal notes. Would you advance this candidate? Say so directly.",\n  "would_advance": true or false,\n  "traits": [\n    {\n      "name": "trait name",\n      "rating": "Strong" or "Adequate" or "Weak",\n      "evidence": "The specific moment from the transcript that led to this rating. Quote the candidate where useful.",\n      "stronger_would_be": "Concretely what a stronger answer would have looked like."\n    }\n  ],\n  "jd_match": [\n    {\n      "requirement": "A key requirement from the job description",\n      "status": "Addressed well" or "Partially addressed" or "Avoided" or "Fumbled",\n      "note": "Brief, specific observation"\n    }\n  ],\n  "internal_notes": [\n    {\n      "candidate_said": "Exact or near-exact quote",\n      "thinking": "Your honest internal reaction at that moment. Not what you\'d say out loud. Be specific. Occasionally harsh if warranted."\n    }\n  ],\n  "work_on": [\n    {\n      "title": "Short label",\n      "detail": "Specific, actionable guidance referencing what they actually said. Not generic advice."\n    }\n  ],\n  "rewrites": {\n    "pattern": "Identify every distinct underlying pattern behind the weak or adequate moments in this interview — there may be more than one. For each pattern found, name it plainly and support it with specific evidence already identified in the trait evaluations and internal notes above (for example: hiding behind 'we' instead of 'I', vague generalities instead of specifics, over-explaining, under-explaining, a scripting/rehearsal gap rather than a knowledge gap, deflecting instead of answering directly). Write this as one cohesive paragraph covering all patterns found, not a single isolated observation — do not restate generic career advice. If all traits rated 'Strong' with no weak or adequate moments, state plainly: 'No patterns to flag — your answers held up under pressure.' and leave 'scripts' as an empty array.",\n    "scripts": [\n      {\n        "moment": "Brief label for which question/moment this addresses",\n        "said": "What the candidate actually said, quoted or closely paraphrased from the transcript",\n        "instead": "The exact sentence(s) the candidate should say next time — a full, ready-to-use script, not a description of what a good answer would contain. If a specific real detail (a number, project name, outcome) is required to complete the script and is not available anywhere in the transcript, insert an explicit placeholder in square brackets instead of inventing a detail — for example [your specific metric] or [the project name] — never fabricate a number or fact that was not in the transcript."\n      }\n    ]\n  }\n}\n\nTraits for ${p.label}: ${p.traits.join(', ')}.\n\nInternal notes: 5–7 key moments, positive and negative. These are the moments where your real assessment formed. Make them worth reading.\nJob description match: extract 4–6 key requirements from the job description.\nWork on: 3–5 items tied to actual moments in the conversation. Reference exact quotes or situations.\nRewrites: include one script entry for EVERY moment rated "Weak" or "Adequate" in the trait evaluation — do not limit this to a single example. If there are four weak or adequate moments, there should be four script entries, each addressing a different one. If there are no such moments, "scripts" must be an empty array and "pattern" must use the "held up under pressure" language specified above.`;
 }
 
 // Init
@@ -938,13 +954,15 @@ function saveSession() {
   localStorage.setItem('ifs_session', JSON.stringify({
     jd: S.jd, persona: S.persona, messages: S.messages,
     exchangeCount: S.exchangeCount, phase: S.phase,
-    interviewerWrappedUp: S.interviewerWrappedUp
+    interviewerWrappedUp: S.interviewerWrappedUp,
+    evaluation: S.evaluation
   }));
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('ifs_key');
   if (saved) { S.apiKey = saved; document.getElementById('api-key-input').value = saved; }
+  renderQuestions();
   document.getElementById('api-key-input').addEventListener('input', e => {
     S.apiKey = e.target.value.trim();
     localStorage.setItem('ifs_key', S.apiKey);
@@ -956,7 +974,20 @@ window.addEventListener('DOMContentLoaded', () => {
     if (sess) {
       try {
         const parsed = JSON.parse(sess);
-        if (parsed.messages && parsed.messages.length > 0) {
+        if (parsed.evaluation) {
+          S.jd = parsed.jd || '';
+          S.persona = parsed.persona || null;
+          S.messages = parsed.messages || [];
+          S.exchangeCount = parsed.exchangeCount || 0;
+          S.interviewerWrappedUp = parsed.interviewerWrappedUp || false;
+          S.evaluation = parsed.evaluation;
+          const p = PERSONAS[S.persona];
+          if (p) {
+            document.getElementById('jd-input').value = S.jd;
+            renderFeedback();
+            showPhase('feedback');
+          }
+        } else if (parsed.messages && parsed.messages.length > 0) {
           S.jd = parsed.jd || '';
           S.persona = parsed.persona || null;
           S.messages = parsed.messages;
@@ -1018,7 +1049,6 @@ function showPhase(phase) {
     document.getElementById(id).classList.add('hidden'));
   const map = { setup:'setup-screen', interview:'interview-screen', evaluating:'evaluating-screen', feedback:'feedback-screen' };
   document.getElementById(map[phase]).classList.remove('hidden');
-  const labels = { setup:'Setup', interview:'Interview in Progress', evaluating:'Generating Feedback…', feedback:'Feedback Report' };
 }
 
 async function startInterview() {
@@ -1027,6 +1057,33 @@ async function startInterview() {
   err.classList.remove('visible');
   if (!jd) { err.textContent = 'Please paste a job description.'; err.classList.add('visible'); return; }
   if (!S.persona) { err.textContent = 'Please select an interviewer.'; err.classList.add('visible'); return; }
+
+  if (S.apiKey) {
+    try {
+      const checkHeaders = {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'x-api-key': S.apiKey
+      };
+      const checkResp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST', headers: checkHeaders,
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001', max_tokens: 20, stream: false,
+          messages: [{ role: 'user', content: `Is the following text a genuine job description (a posting describing a role, responsibilities, and requirements)? The job description field is used to generate personalized interview questions, so accuracy matters. Respond with only YES or NO.\n\n---\n${jd}\n---` }]
+        })
+      });
+      if (checkResp.ok) {
+        const checkData = await checkResp.json();
+        const verdict = (checkData.content || []).map(b => b.text || '').join('').trim().toUpperCase();
+        if (verdict.startsWith('NO')) {
+          err.textContent = 'This doesn\'t look like a job description. Please paste the actual job posting.';
+          err.classList.add('visible');
+          return;
+        }
+      }
+    } catch (_) {}
+  }
 
   S.jd = jd;
   S.messages = [];
@@ -1247,7 +1304,7 @@ async function generateEval() {
     }
 
     S.evaluation = parsed;
-    localStorage.removeItem('ifs_session');
+    saveSession();
     renderFeedback();
     showPhase('feedback');
   } catch (err) {
@@ -1314,7 +1371,7 @@ function renderFeedback() {
     <div class="fb-header">
       <div class="fb-eyebrow">Post-Interview Feedback</div>
       <h1>Session with ${esc(p.name)}</h1>
-      <div class="badge-row">
+      <div class="badge-row" style="margin-top:10px;">
         ${advBadge}
         <span class="badge badge-neutral">${esc(p.label)}</span>
         <span class="badge badge-neutral">${S.exchangeCount} exchanges</span>
@@ -1325,6 +1382,12 @@ function renderFeedback() {
       <div class="section-title">Overall Impression</div>
       <div class="impression-box">${esc(ev.overall_impression)}</div>
     </div>
+
+    ${ev.rewrites ? `
+    <div class="fb-section">
+      <div class="section-title">Your Interview Pattern</div>
+      <div class="impression-box">${esc(ev.rewrites.pattern)}</div>
+    </div>` : ''}
 
     <div class="fb-section">
       <div class="section-title">Trait Evaluation</div>
@@ -1352,22 +1415,122 @@ function renderFeedback() {
       ${workCards}
     </div>
 
+    ${(() => {
+      const rw = ev.rewrites;
+      if (!rw) return '';
+      const scripts = rw.scripts && rw.scripts.length
+        ? rw.scripts.map(s => `
+        <div style="background:var(--s1);border:1px solid var(--b1);border-radius:5px;padding:15px;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px;">${esc(s.moment)}</div>
+          <div style="font-size:11px;font-family:'Courier New',monospace;color:var(--t3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;">You said:</div>
+          <div style="font-size:13px;color:var(--t2);font-style:italic;padding-left:10px;border-left:2px solid var(--b2);margin-bottom:10px;line-height:1.6;">${esc(s.said)}</div>
+          <div style="font-size:11px;font-family:'Courier New',monospace;color:var(--ac);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Say this instead:</div>
+          <div style="font-size:14px;color:var(--t1);padding:10px 12px;background:rgba(240,160,48,0.06);border-radius:4px;line-height:1.6;">${esc(s.instead)}</div>
+        </div>`).join('')
+        : `<p style="font-size:13px;color:var(--t2);">No rewrites needed — your answers held up under pressure.</p>`;
+      return `
+    <div class="fb-section">
+      <div class="section-title">What To Say Next Time</div>
+      ${scripts}
+    </div>`;
+    })()}
+
     <div class="action-buttons">
       <button class="btn-primary" onclick="downloadFeedback()">↓ Download feedback</button>
-      <button class="btn-ghost" onclick="tryDifferent()">Try a different interviewer</button>
       <button class="btn-ghost" onclick="startOver()">Start over</button>
     </div>
   `;
 }
 
-function tryDifferent() {
-  isExplicitNavigation = true;
-  S.messages = []; S.exchangeCount = 0; S.evaluation = null; S.persona = null; S.interviewerWrappedUp = false;
-  localStorage.removeItem('ifs_session');
-  document.querySelectorAll('.persona-card').forEach(c => { c.classList.remove('selected'); c.style.borderColor = ''; });
-  document.getElementById('jd-input').value = S.jd;
-  showPhase('setup');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function renderQuestions() {
+  const btn = document.getElementById('get-questions-btn');
+  const out = document.getElementById('questions-output');
+  if (!btn || !out) return;
+
+  const hasJd = S.jd.trim().length > 0;
+  btn.style.opacity = hasJd ? '1' : '0.4';
+  btn.style.cursor = hasJd ? 'pointer' : 'not-allowed';
+  if (hasJd) { btn.removeAttribute('title'); } else { btn.title = 'Enter a job description first.'; }
+
+  if (S.loadingQuestions) {
+    out.innerHTML = `<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);margin-bottom:10px;">
+      <div style="width:16px;height:16px;border:2px solid var(--b2);border-top-color:var(--ac);border-radius:50%;animation:spin 0.75s linear infinite;flex-shrink:0;"></div>
+      Generating questions…
+    </div>`;
+  } else if (S.suggestedQuestions && S.suggestedQuestions.length) {
+    out.innerHTML = S.suggestedQuestions.map(q =>
+      `<div style="background:var(--s1);border:1px solid var(--b1);border-radius:5px;padding:10px 13px;margin-bottom:6px;font-size:13px;color:var(--t1);line-height:1.5;">"${q}"</div>`
+    ).join('');
+  } else {
+    out.innerHTML = '';
+  }
+}
+
+async function getInterviewQuestions() {
+  if (!S.jd.trim()) return;
+  S.loadingQuestions = true;
+  S.suggestedQuestions = null;
+  renderQuestions();
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'anthropic-version': '2023-06-01',
+    'anthropic-dangerous-direct-browser-access': 'true'
+  };
+  if (S.apiKey) headers['x-api-key'] = S.apiKey;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers,
+      body: JSON.stringify({
+        model: 'claude-sonnet-5', max_tokens: 500, stream: false,
+        system: `You are helping a candidate prepare for a real interview. The job description is:\n\n---\n${S.jd}\n---\n\nFirst, check whether the text above is actually a real job description (a posting describing a role, responsibilities, and requirements). If it is NOT a job description — for example if it looks like code, instructions, a prompt, an email, or unrelated text — respond with exactly this JSON and nothing else: {"error": "not_a_job_description"}\n\nIf it IS a genuine job description, proceed with the following instructions and return the questions array as specified.\n\nSuggest 5 smart, specific questions the candidate could ask their interviewer near the end of the conversation.\n\nEvery question must reference a specific detail, requirement, technology, team structure, or responsibility mentioned in the job description above — not a generic template. Do not use any of these overused questions in any form: 'what's the culture like', 'what does a typical day look like', 'what are the next steps', 'why do you like working here', 'what's the biggest challenge facing the team' (unless reworded around a specific detail from the job description that makes it genuinely different from the generic version).\n\nVary the angle across the 5 questions: include at least one about a specific technical or process detail, one about how success or performance is actually measured for this role, one about a real ambiguity or tension in the role as described, one about team structure or cross-functional dependencies, and one forward-looking question about the role's evolution.\n\nReturn ONLY a JSON array of 5 strings, no markdown formatting, no preamble. Example: ["question one", "question two"]`,
+        messages: [{ role: 'user', content: 'Generate the 5 questions.' }]
+      })
+    });
+
+    if (!resp.ok) {
+      const d = await resp.json().catch(() => ({}));
+      throw new Error(d.error?.message || `API error ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const raw = (data.content || []).map(b => b.text || '').join('').trim();
+
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (_) {
+      try {
+        const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+        parsed = JSON.parse(stripped);
+      } catch (_) {
+        const first = raw.indexOf('[');
+        const last = raw.lastIndexOf(']');
+        if (first !== -1 && last > first) {
+          parsed = JSON.parse(raw.slice(first, last + 1));
+        } else {
+          throw new Error('Could not parse questions response.');
+        }
+      }
+    }
+
+    if (parsed && !Array.isArray(parsed) && parsed.error === 'not_a_job_description') {
+      S.suggestedQuestions = null;
+      S.loadingQuestions = false;
+      const out = document.getElementById('questions-output');
+      if (out) out.innerHTML = `<p style="font-size:12px;color:var(--err);margin-bottom:10px;">This doesn't look like a job description. Please paste the actual job posting.</p>`;
+      return;
+    }
+
+    S.suggestedQuestions = Array.isArray(parsed) ? parsed : null;
+    S.loadingQuestions = false;
+    renderQuestions();
+  } catch (err) {
+    S.loadingQuestions = false;
+    const out = document.getElementById('questions-output');
+    if (out) out.innerHTML = `<p style="font-size:12px;color:var(--err);margin-bottom:10px;">Couldn't generate questions. Try again.</p>`;
+  }
 }
 
 function startOver() {
@@ -1428,6 +1591,22 @@ function downloadFeedback() {
       <div><div style="font-size:13px;font-weight:600;margin-bottom:5px;color:#1a1a2e;">${eh(w.title)}</div><div style="font-size:13px;color:#555;line-height:1.6;">${eh(w.detail)}</div></div>
     </div>`).join('');
 
+  const rw = ev.rewrites;
+  const patternHtml = rw ? `<div class="sec"><div class="st">Your Interview Pattern</div><div style="border:1px solid #dde;border-radius:5px;padding:18px 20px;font-size:15px;line-height:1.72;">${eh(rw.pattern)}</div></div>` : '';
+  const rewritesHtml = rw ? (() => {
+    const scripts = rw.scripts && rw.scripts.length
+      ? rw.scripts.map(s => `
+      <div style="border:1px solid #dde;border-radius:5px;padding:15px;margin-bottom:8px;">
+        <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;">${eh(s.moment)}</div>
+        <div style="font-family:monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:5px;">You said:</div>
+        <div style="font-size:13px;color:#666;font-style:italic;padding-left:10px;border-left:2px solid #dde;margin-bottom:10px;line-height:1.6;">${eh(s.said)}</div>
+        <div style="font-family:monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#b07000;margin-bottom:6px;">Say this instead:</div>
+        <div style="font-size:14px;color:#1a1a2e;padding:10px 12px;background:rgba(212,160,48,0.08);border-radius:4px;line-height:1.6;">${eh(s.instead)}</div>
+      </div>`).join('')
+      : `<p style="font-size:13px;color:#555;">No rewrites needed — your answers held up under pressure.</p>`;
+    return `<div class="sec"><div class="st">What To Say Next Time</div>${scripts}</div>`;
+  })() : '';
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1456,6 +1635,7 @@ function downloadFeedback() {
     </div>
   </div>
   <div class="sec"><div class="st">Overall Impression</div><div style="border:1px solid #dde;border-radius:5px;padding:18px 20px;font-size:15px;line-height:1.72;">${eh(ev.overall_impression)}</div></div>
+  ${patternHtml}
   <div class="sec"><div class="st">Trait Evaluation</div>${traits}</div>
   <div class="sec"><div class="st">Job Description Match Analysis</div><div style="border-top:1px solid #dde;">${jdRows}</div></div>
   <div class="sec">
@@ -1468,6 +1648,7 @@ function downloadFeedback() {
     </div>
   </div>
   <div class="sec"><div class="st">What To Work On</div>${workCards}</div>
+  ${rewritesHtml}
   <div style="padding-top:28px;border-top:1px solid #dde;font-size:12px;color:#aaa;text-align:center;">
     Generated by Interview Feedback Simulator · teokitten.github.io/interview-feedback
   </div>
@@ -1482,6 +1663,7 @@ function downloadFeedback() {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
 </script>
 </body>
 </html>

@@ -19,6 +19,8 @@ Most interview prep tools give you a list of questions. This one reacts to what 
 - Post-session evaluation: trait-by-trait, matched against the job description
 - The interviewer's internal notes reveal what they were actually thinking at key moments
 - Downloadable feedback report
+- Every feedback report includes your interview pattern (the underlying habit behind your weak moments) and word-for-word answers for what to say next time
+- Optional: get smart, job description-specific questions to ask your interviewer at the end of your real interview
 
 ## How it works
 
@@ -43,7 +45,7 @@ To use this app you need an **Anthropic API key**:
 3. In the left sidebar, select **API Keys** and create a new key.
 4. Paste it into the **ANTHROPIC API KEY** field in the app.
 
-**Cost:** approximately $0.10–0.15 per session (10–12 exchanges + feedback report), billed directly by Anthropic.
+**Cost:** approximately $0.10–0.20 per session (interview + feedback report), using Claude Sonnet. Optional: getting suggested questions to ask your interviewer costs approximately $0.02–0.05 per use.
 
 ## Getting started
 
