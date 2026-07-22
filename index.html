@@ -725,6 +725,8 @@ textarea::placeholder { color: var(--t2); }
     </div>
   </div>
 
+  <div id="wrap-up-banner" style="display:none;"></div>
+
   <div class="input-area">
     <textarea id="user-input" placeholder="Type your response…" rows="1"
       onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
@@ -761,7 +763,8 @@ const S = {
   messages: [],
   exchangeCount: 0,
   evaluation: null,
-  busy: false
+  busy: false,
+  interviewerWrappedUp: false
 };
 
 const PERSONAS = {
@@ -929,6 +932,16 @@ function toggleKeyVisibility() {
   btn.innerHTML = isHidden ? SVG_EYE_OPEN : SVG_EYE_CLOSED;
 }
 
+let isExplicitNavigation = false;
+
+function saveSession() {
+  localStorage.setItem('ifs_session', JSON.stringify({
+    jd: S.jd, persona: S.persona, messages: S.messages,
+    exchangeCount: S.exchangeCount, phase: S.phase,
+    interviewerWrappedUp: S.interviewerWrappedUp
+  }));
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('ifs_key');
   if (saved) { S.apiKey = saved; document.getElementById('api-key-input').value = saved; }
@@ -937,9 +950,42 @@ window.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('ifs_key', S.apiKey);
     updateKeyFeedback(S.apiKey);
   });
+
+  if (!isExplicitNavigation) {
+    const sess = localStorage.getItem('ifs_session');
+    if (sess) {
+      try {
+        const parsed = JSON.parse(sess);
+        if (parsed.messages && parsed.messages.length > 0) {
+          S.jd = parsed.jd || '';
+          S.persona = parsed.persona || null;
+          S.messages = parsed.messages;
+          S.exchangeCount = parsed.exchangeCount || 0;
+          S.interviewerWrappedUp = parsed.interviewerWrappedUp || false;
+          S.phase = 'interview';
+          const p = PERSONAS[S.persona];
+          if (p) {
+            document.getElementById('jd-input').value = S.jd;
+            const av = document.getElementById('iv-avatar');
+            av.textContent = p.initial; av.style.background = p.color;
+            document.getElementById('iv-name').textContent = p.name;
+            document.getElementById('iv-role').textContent = p.label;
+            const sav = document.getElementById('stream-avatar');
+            sav.textContent = p.initial; sav.style.background = p.color;
+            const list = document.getElementById('messages-list');
+            list.innerHTML = '';
+            S.messages.forEach(m => appendMsg(m));
+            if (S.interviewerWrappedUp) renderWrapUpBanner();
+            showPhase('interview');
+          }
+        }
+      } catch (_) {}
+    }
+  }
 });
 
 function goBack() {
+  isExplicitNavigation = true;
   showPhase('setup');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -986,6 +1032,7 @@ async function startInterview() {
   S.messages = [];
   S.exchangeCount = 0;
   S.evaluation = null;
+  S.interviewerWrappedUp = false;
 
   const p = PERSONAS[S.persona];
   const av = document.getElementById('iv-avatar');
@@ -1009,6 +1056,7 @@ async function sendMessage() {
   inp.value = ''; autoResize(inp);
   const msg = { role: 'user', content: text };
   S.messages.push(msg);
+  saveSession();
   appendMsg(msg);
   S.busy = true; setControls();
   await streamTurn([...S.messages], false);
@@ -1064,8 +1112,14 @@ async function streamTurn(apiMessages, silent) {
     if (fullText) {
       const aiMsg = { role: 'assistant', content: fullText };
       S.messages.push(aiMsg);
+      saveSession();
       appendMsg(aiMsg);
       if (!silent) S.exchangeCount++;
+      const closingPhrases = ["i'll share my notes", "we'll be in touch", "that's everything i needed", "that's what i needed", "that's all for today", "i'll sync with the team", "i'll share my notes with the team"];
+      if (!S.interviewerWrappedUp && closingPhrases.some(p => fullText.toLowerCase().includes(p))) {
+        S.interviewerWrappedUp = true;
+        renderWrapUpBanner();
+      }
     }
   } catch (err) {
     showStream(false);
@@ -1115,6 +1169,17 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 140) + 'px';
 }
 
+function renderWrapUpBanner() {
+  const banner = document.getElementById('wrap-up-banner');
+  if (!banner) return;
+  const name = PERSONAS[S.persona]?.name || 'The interviewer';
+  banner.innerHTML = `<div style="background: rgba(240,160,48,0.08); border: 1px solid rgba(240,160,48,0.25); border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+  <span style="font-size: 13px; color: var(--ac);">${esc(name)} has wrapped up. Ready for your feedback?</span>
+  <button onclick="endInterview()" style="padding: 8px 16px; background: var(--ac); color: #040810; border: none; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;">Get My Feedback</button>
+</div>`;
+  banner.style.display = 'block';
+}
+
 function endInterview() {
   if (S.exchangeCount < 2) {
     if (!confirm(`You've only had ${S.exchangeCount} exchange(s). End anyway and generate feedback?`)) return;
@@ -1141,7 +1206,7 @@ async function generateEval() {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST', headers,
       body: JSON.stringify({
-        model: 'claude-sonnet-5', max_tokens: 4000, stream: false,
+        model: 'claude-sonnet-5', max_tokens: 8000, stream: false,
         system: buildEvalSystem(p, S.jd),
         messages: [{ role: 'user', content: 'Here is the interview transcript:\n\n' + transcript }]
       })
@@ -1153,15 +1218,46 @@ async function generateEval() {
     }
 
     const data = await resp.json();
-    const raw = data.content?.[0]?.text || '';
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('Could not parse evaluation – unexpected response format.');
-    S.evaluation = JSON.parse(match[0]);
+
+    if (data.stop_reason === 'max_tokens') {
+      throw new Error('Evaluation response was cut off (too long). Please try again.');
+    }
+
+    const raw = (data.content || []).map(b => b.text || '').join('').trim();
+
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (_) {
+      try {
+        const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+        parsed = JSON.parse(stripped);
+      } catch (_) {
+        const first = raw.indexOf('{');
+        const last = raw.lastIndexOf('}');
+        if (first === -1 || last === -1 || last <= first) {
+          throw new Error('Could not parse evaluation. Response length: ' + raw.length + ' chars. Start: ' + raw.slice(0, 150));
+        }
+        try {
+          parsed = JSON.parse(raw.slice(first, last + 1));
+        } catch (_) {
+          throw new Error('Could not parse evaluation. Response length: ' + raw.length + ' chars. Start: ' + raw.slice(0, 150));
+        }
+      }
+    }
+
+    S.evaluation = parsed;
+    localStorage.removeItem('ifs_session');
     renderFeedback();
     showPhase('feedback');
   } catch (err) {
-    alert('Error generating feedback: ' + err.message);
-    showPhase('interview');
+    const evalScreen = document.getElementById('evaluating-screen');
+    evalScreen.innerHTML = `<div style="text-align: center; padding: 40px 24px;">
+  <p style="color: var(--err); font-size: 13px; margin-bottom: 16px;">Could not generate feedback: ${esc(err.message)}</p>
+  <p style="color: var(--t2); font-size: 12px; margin-bottom: 16px;">Your conversation has not been lost.</p>
+  <button onclick="endInterview()" style="padding: 9px 18px; background: var(--ac); color: #040810; border: none; border-radius: 5px; font-size: 13px; font-weight: 600; cursor: pointer; margin-right: 8px;">Try Again</button>
+  <button onclick="showPhase('interview')" style="padding: 9px 18px; background: transparent; color: var(--t2); border: 1px solid var(--b2); border-radius: 5px; font-size: 13px; cursor: pointer;">Back to Interview</button>
+</div>`;
   }
 }
 
@@ -1265,7 +1361,9 @@ function renderFeedback() {
 }
 
 function tryDifferent() {
-  S.messages = []; S.exchangeCount = 0; S.evaluation = null; S.persona = null;
+  isExplicitNavigation = true;
+  S.messages = []; S.exchangeCount = 0; S.evaluation = null; S.persona = null; S.interviewerWrappedUp = false;
+  localStorage.removeItem('ifs_session');
   document.querySelectorAll('.persona-card').forEach(c => { c.classList.remove('selected'); c.style.borderColor = ''; });
   document.getElementById('jd-input').value = S.jd;
   showPhase('setup');
@@ -1273,7 +1371,9 @@ function tryDifferent() {
 }
 
 function startOver() {
-  S.messages = []; S.exchangeCount = 0; S.evaluation = null; S.persona = null; S.jd = '';
+  isExplicitNavigation = true;
+  S.messages = []; S.exchangeCount = 0; S.evaluation = null; S.persona = null; S.jd = ''; S.interviewerWrappedUp = false;
+  localStorage.removeItem('ifs_session');
   document.querySelectorAll('.persona-card').forEach(c => { c.classList.remove('selected'); c.style.borderColor = ''; });
   document.getElementById('jd-input').value = '';
   showPhase('setup');
