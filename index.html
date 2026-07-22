@@ -639,11 +639,11 @@ textarea::placeholder { color: var(--t2); }
             <p style="font-size:13px; color:#a07028; margin-bottom:10px;">One session = one complete interview with one persona, from the first question through the feedback report.</p>
             <p style="font-size:12px; color:#a07028; font-family:'Courier New',monospace; margin-bottom:6px; font-weight:700;">Example:</p>
             <div class="cost-mono">
-              Model: claude-sonnet-4-6<br>
+              Model: claude-sonnet-5<br>
               ~10–12 exchanges + evaluation<br>
               ~30k input tokens<br>
               ~3k output tokens<br>
-              <span class="cost-highlight">≈ $0.10–0.20 per session</span>
+              <span class="cost-highlight">≈ $0.10–0.15 per session</span>
             </div>
           </div>
         </div>
@@ -1029,7 +1029,7 @@ async function streamTurn(apiMessages, silent) {
 
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST', headers,
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 800, stream: true, system: buildSystem(p, S.jd), messages: apiMessages })
+      body: JSON.stringify({ model: 'claude-sonnet-5', max_tokens: 800, stream: true, system: buildSystem(p, S.jd), messages: apiMessages })
     });
 
     if (!resp.ok) {
@@ -1141,7 +1141,7 @@ async function generateEval() {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST', headers,
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 4000, stream: false,
+        model: 'claude-sonnet-5', max_tokens: 4000, stream: false,
         system: buildEvalSystem(p, S.jd),
         messages: [{ role: 'user', content: 'Here is the interview transcript:\n\n' + transcript }]
       })

@@ -43,7 +43,7 @@ To use this app you need an **Anthropic API key**:
 3. In the left sidebar, select **API Keys** and create a new key.
 4. Paste it into the **ANTHROPIC API KEY** field in the app.
 
-**Cost:** approximately $0.10–0.20 per session (10–12 exchanges + feedback report), billed directly by Anthropic.
+**Cost:** approximately $0.10–0.15 per session (10–12 exchanges + feedback report), billed directly by Anthropic.
 
 ## Getting started
 
@@ -54,7 +54,7 @@ The app runs entirely in your browser – no backend, no account, no data stored
 
 ## Tech stack
 
-Vanilla JS · Single HTML file · Anthropic API (claude-sonnet-4-6) · No frameworks · No dependencies
+Vanilla JS · Single HTML file · Anthropic API (claude-sonnet-5) · No frameworks · No dependencies
 
 ## License
 
